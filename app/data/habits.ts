@@ -1,0 +1,60 @@
+import { Habit } from "@/app/types";
+
+export const habitsData: Habit[] = [
+  {
+    id: 1,
+    name: "Morning Yoga",
+    daysCompleted: 42,
+    description: "Йога по утрам уже стала образом жизни!",
+    type: "good",
+    frequency: "daily",
+  },
+  {
+    id: 2,
+    name: "Drink Green Tea",
+    daysCompleted: 10,
+    description: "Зелёный чай вместо утреннего кофе.",
+    type: "good",
+    frequency: "daily",
+  },
+  {
+    id: 3,
+    name: "Read 30 min",
+    daysCompleted: 7,
+    description: "Читаю художественную литературу перед сном.",
+    type: "good",
+    frequency: "daily",
+  },
+  {
+    id: 4,
+    name: "Walk 10,000 Steps",
+    daysCompleted: 21,
+    description: "Стараюсь каждый день достигать 10к шагов!",
+    type: "good",
+    frequency: "daily",
+  },
+  {
+    id: 5,
+    name: "Smoking",
+    daysCompleted: 0,
+    description: "Бросаю курить, держусь уже неделю!",
+    type: "bad",
+    frequency: "daily",
+  },
+  {
+    id: 6,
+    name: "Late Night Snacks",
+    daysCompleted: 3,
+    description: "Стараюсь не есть после 8 вечера.",
+    type: "bad",
+    frequency: "daily",
+  },
+  {
+    id: 7,
+    name: "Social Media",
+    daysCompleted: 5,
+    description: "Уменьшаю время в соцсетях до 1 часа в день.",
+    type: "bad",
+    frequency: "daily",
+  },
+];

@@ -65,8 +65,8 @@
 
 3. **Friends System**  
    - Add/search friends.  
-   - View each friend's habits and progress.  
-   - Possibly restrict which habits friends can see.
+   - View your friends list
+   - While creating a habit, you can select a friend to share the habit with
 
 ---
 

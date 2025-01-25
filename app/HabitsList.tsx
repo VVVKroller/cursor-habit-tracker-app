@@ -27,89 +27,21 @@ import Animated, {
 import { VStack } from "@/components/ui/vstack";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import * as Haptics from 'expo-haptics';
+import * as Haptics from "expo-haptics";
+import { Calendar } from "./components/Calendar/Calendar";
+import { WaterTracker } from "./components/WaterTracker/WaterTracker";
+import { HabitItem } from "./components/HabitItem/HabitItem";
+import { generateDatesRange } from "./utils/dateUtils";
+import { habitsData } from "./data/habits";
+import { HabitsToggle } from "./components/HabitsToggle/HabitsToggle";
+import { colors } from "./utils/colors";
+import { HabitEditModal } from "./components/HabitEditModal/HabitEditModal";
+import { AddHabitMenu } from "./components/AddHabitMenu/AddHabitMenu";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { BottomNavigation } from "./components/Navigation/BottomNavigation";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CALENDAR_ITEM_WIDTH = SCREEN_WIDTH / 7;
-
-function generateDatesRange() {
-  const result = [];
-  const now = new Date();
-  const start = new Date(now);
-  start.setDate(start.getDate() - 15);
-  const end = new Date(now);
-  end.setDate(end.getDate() + 15);
-  let current = new Date(start);
-  while (current <= end) {
-    const dateStr =
-      current.toDateString().slice(0, 3) + " " + current.getDate();
-    result.push({
-      fullDate: new Date(current),
-      label: dateStr,
-    });
-    current.setDate(current.getDate() + 1);
-  }
-  return result;
-}
-
-const habitsData: Habit[] = [
-  {
-    id: 1,
-    name: "Morning Yoga",
-    daysCompleted: 42,
-    description: "Йога по утрам уже стала образом жизни!",
-    type: "good",
-    frequency: "daily",
-  },
-  {
-    id: 2,
-    name: "Drink Green Tea",
-    daysCompleted: 10,
-    description: "Зелёный чай вместо утреннего кофе.",
-    type: "good",
-    frequency: "daily",
-  },
-  {
-    id: 3,
-    name: "Read 30 min",
-    daysCompleted: 7,
-    description: "Читаю художественную литературу перед сном.",
-    type: "good",
-    frequency: "daily",
-  },
-  {
-    id: 4,
-    name: "Walk 10,000 Steps",
-    daysCompleted: 21,
-    description: "Стараюсь каждый день достигать 10к шагов!",
-    type: "good",
-    frequency: "daily",
-  },
-  {
-    id: 5,
-    name: "Smoking",
-    daysCompleted: 0,
-    description: "Бросаю курить, держусь уже неделю!",
-    type: "bad",
-    frequency: "daily",
-  },
-  {
-    id: 6,
-    name: "Late Night Snacks",
-    daysCompleted: 3,
-    description: "Стараюсь не есть после 8 вечера.",
-    type: "bad",
-    frequency: "daily",
-  },
-  {
-    id: 7,
-    name: "Social Media",
-    daysCompleted: 5,
-    description: "Уменьшаю время в соцсетях до 1 часа в день.",
-    type: "bad",
-    frequency: "daily",
-  },
-];
 
 function shuffleArray<T>(array: T[]): T[] {
   const newArray = [...array];
@@ -124,7 +56,9 @@ function shuffleArray<T>(array: T[]): T[] {
 type RootStackParamList = {
   settings: undefined;
   Home: undefined;
-  AddHabit: undefined;
+  AddHabit: {
+    type: "good" | "bad";
+  };
   // ... other screens
 };
 
@@ -148,6 +82,7 @@ export default function HabitsList() {
       item.fullDate.getDate() === now.getDate()
     );
   });
+
   const [selectedDayIndex, setSelectedDayIndex] =
     useState<number>(initialIndex);
   const [habits, setHabits] = useState<Habit[]>(habitsData);
@@ -155,9 +90,12 @@ export default function HabitsList() {
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   const [editingName, setEditingName] = useState<string>("");
   const [showGoodHabits, setShowGoodHabits] = useState<boolean>(true);
+  const [waterIntake, setWaterIntake] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
 
   const scrollY = useSharedValue(0);
+  const listScale = useSharedValue(0.8);
+  const listOpacity = useSharedValue(0);
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -165,50 +103,13 @@ export default function HabitsList() {
     },
   });
 
-  const calendarAnimatedStyle = useAnimatedStyle(() => {
-    const scale = interpolate(
-      scrollY.value,
-      [0, 100],
-      [1, 0.9],
-      Extrapolate.CLAMP
-    );
-
-    return {
-      transform: [{ scale }],
-    };
-  });
-
-  // Add animation values
-  const listScale = useSharedValue(0.8);
-  const listOpacity = useSharedValue(0);
-
-  // Add useEffect for initial animations
-  useEffect(() => {
-    listScale.value = withSpring(1, springConfig);
-    listOpacity.value = withTiming(1, { duration: 500 });
-
-    // Scroll to today's date
-    if (scrollRef.current && initialIndex !== -1) {
-      setTimeout(() => {
-        const screenWidth = Dimensions.get("window").width;
-        const xOffset =
-          initialIndex * CALENDAR_ITEM_WIDTH -
-          screenWidth / 2 +
-          CALENDAR_ITEM_WIDTH / 2;
-        scrollRef.current?.scrollTo({
-          x: xOffset > 0 ? xOffset : 0,
-          animated: true,
-        });
-      }, 100);
-    }
-  }, []);
-
   // Add animated styles
   const listAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: listScale.value }],
     opacity: listOpacity.value,
   }));
 
+  // Filter habits based on type
   const filteredHabits = React.useMemo(
     () =>
       habits.filter(
@@ -216,6 +117,37 @@ export default function HabitsList() {
       ),
     [habits, showGoodHabits]
   );
+
+  // Add a ref for tracking if initial scroll has happened
+  const hasScrolledToToday = useRef(false);
+
+  // Update the useEffect for initial animations and scroll
+  useEffect(() => {
+    listScale.value = withSpring(1, springConfig);
+    listOpacity.value = withTiming(1, { duration: 500 });
+
+    // Scroll to today's date if we haven't already
+    if (
+      scrollRef.current &&
+      initialIndex !== -1 &&
+      !hasScrolledToToday.current
+    ) {
+      const screenWidth = Dimensions.get("window").width;
+      const xOffset =
+        initialIndex * CALENDAR_ITEM_WIDTH -
+        screenWidth / 2 +
+        CALENDAR_ITEM_WIDTH / 2;
+
+      // Use requestAnimationFrame to ensure the scroll happens after layout
+      requestAnimationFrame(() => {
+        scrollRef.current?.scrollTo({
+          x: xOffset > 0 ? xOffset : 0,
+          animated: true,
+        });
+        hasScrolledToToday.current = true;
+      });
+    }
+  }, [initialIndex]); // Add initialIndex as dependency
 
   function handleSelectDay(idx: number) {
     setSelectedDayIndex(idx);
@@ -251,8 +183,6 @@ export default function HabitsList() {
     closeEditModal();
   }
 
-  const [waterIntake, setWaterIntake] = useState(0);
-
   function handleWaterIntake() {
     setWaterIntake((prev) => (prev < 8 ? prev + 1 : prev));
   }
@@ -267,176 +197,71 @@ export default function HabitsList() {
     );
   }
 
+  // Add state for menu
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Add handlers
+  const handleAddGoodHabit = () => {
+    setIsMenuOpen(false);
+    navigation.navigate("AddHabit", { type: "good" });
+  };
+
+  const handleAddBadHabit = () => {
+    setIsMenuOpen(false);
+    navigation.navigate("AddHabit", { type: "bad" });
+  };
+
   return (
     <LinearGradient
-      colors={["#1a237e", "#283593", "#3949ab"]}
+      colors={[
+        colors.gradient.start,
+        colors.gradient.middle,
+        colors.gradient.end,
+      ]}
       style={styles.container}
     >
-      <Box style={styles.calendarContainer}>
-        <ScrollView
-          ref={scrollRef}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.calendarContent}
-        >
-          {allDates.map((item, idx) => {
-            const isSelected = idx === selectedDayIndex;
-            return (
-              <Pressable
-                key={item.label}
-                onPress={() => handleSelectDay(idx)}
-                style={[
-                  styles.calendarItem,
-                  isSelected && styles.calendarItemSelected,
-                ]}
-              >
-                <Text style={styles.calendarDay}>
-                  {item.label.split(" ")[0]}
-                </Text>
-                <Text
-                  style={[
-                    styles.calendarDate,
-                    isSelected && styles.calendarDateSelected,
-                  ]}
-                >
-                  {item.label.split(" ")[1]}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-      </Box>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.content}>
+          <Calendar
+            allDates={allDates}
+            selectedDayIndex={selectedDayIndex}
+            onSelectDay={handleSelectDay}
+            scrollRef={scrollRef}
+          />
 
-      <HStack style={styles.filterContainer}>
-        <Text style={styles.filterLabel}>Show:</Text>
-        <Switch value={showGoodHabits} onValueChange={setShowGoodHabits} />
-        <Text style={styles.filterText}>
-          {showGoodHabits ? "Good Habits" : "Bad Habits"}
-        </Text>
-      </HStack>
+          <HabitsToggle
+            showGoodHabits={showGoodHabits}
+            onToggle={setShowGoodHabits}
+          />
 
-      <Animated.ScrollView
-        style={[styles.habitsContainer, listAnimatedStyle]}
-        contentContainerStyle={styles.habitsContainerContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {filteredHabits.map((habit) => (
-          <Pressable
-            key={habit.id}
-            onPress={() => openHabitDetails(habit)}
-            style={[
-              styles.habitItem,
-              habit.isCompleted && styles.habitItemCompleted,
-            ]}
+          <Animated.ScrollView
+            style={[styles.habitsContainer, listAnimatedStyle]}
+            contentContainerStyle={styles.habitsContainerContent}
+            showsVerticalScrollIndicator={false}
+            onScroll={scrollHandler}
           >
-            <HStack style={styles.habitContent}>
-              <Pressable
-                style={styles.checkbox}
-                onPress={() => toggleHabitCompletion(habit.id)}
-              >
-                {habit.isCompleted && <Text style={styles.checkmark}>✓</Text>}
-              </Pressable>
-              <VStack style={styles.habitInfo}>
-                <Text style={styles.habitName}>{habit.name}</Text>
-                <Text style={styles.habitFrequency}>
-                  {habit.frequency === "daily" ? "Daily" : "Weekly"}
-                </Text>
-              </VStack>
-              <Pressable
-                onPress={(e) => {
-                  e.stopPropagation();
-                  handleEditHabit(habit);
-                }}
-                style={styles.editButton}
-              >
-                <Ionicons
-                  name="ellipsis-horizontal"
-                  size={24}
-                  color="#FFFFFF"
-                />
-              </Pressable>
-            </HStack>
-          </Pressable>
-        ))}
-
-        <Box style={styles.waterTrackerContainer}>
-          <HStack style={styles.waterTrackerHeader}>
-            <Text style={styles.waterTrackerTitle}>Water Intake</Text>
-            <Text style={styles.waterTrackerSubtitle}>Daily Goal: 2L</Text>
-          </HStack>
-
-          <View style={styles.waterProgressContainer}>
-            <Animated.View
-              style={[
-                styles.waterProgress,
-                {
-                  width: withSpring(`${(waterIntake / 8) * 100}%`, {
-                    damping: 15,
-                    stiffness: 100
-                  }),
-                },
-              ]}
-            />
-          </View>
-
-          <HStack style={styles.waterGlassesContainer}>
-            {[...Array(8)].map((_, index) => (
-              <Pressable
-                key={index}
-                onPress={() => setWaterIntake(index + 1)}
-                style={({ pressed }) => [
-                  styles.waterGlass,
-                  pressed && { transform: [{ scale: 0.95 }] }
-                ]}
-              >
-                <Ionicons
-                  name={index < waterIntake ? "water" : "water-outline"}
-                  size={28}
-                  color={index < waterIntake ? "#60A5FA" : "#94A3B8"}
-                  style={styles.waterIcon}
-                />
-              </Pressable>
+            {filteredHabits.map((habit) => (
+              <HabitItem
+                key={habit.id}
+                habit={habit}
+                onPress={() => openHabitDetails(habit)}
+                onEdit={() => handleEditHabit(habit)}
+                onToggleCompletion={() => toggleHabitCompletion(habit.id)}
+              />
             ))}
-          </HStack>
 
-          <HStack style={styles.waterControls}>
-            <Pressable
-              style={styles.waterControlButton}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setWaterIntake((prev) => Math.max(0, prev - 1));
-              }}
-            >
-              <Ionicons name="remove" size={24} color="#FFFFFF" />
-            </Pressable>
-            <Text style={styles.waterAmount}>{waterIntake} / 8 glasses</Text>
-            <Pressable
-              style={styles.waterControlButton}
-              onPress={() => setWaterIntake((prev) => Math.min(8, prev + 1))}
-            >
-              <Ionicons name="add" size={24} color="#FFFFFF" />
-            </Pressable>
-          </HStack>
-        </Box>
-      </Animated.ScrollView>
+            <WaterTracker
+              waterIntake={waterIntake}
+              setWaterIntake={setWaterIntake}
+            />
+          </Animated.ScrollView>
+        </View>
+      </SafeAreaView>
 
-      <HStack style={styles.navigationContainer}>
-        <Pressable style={styles.navButton} onPress={() => console.log("Home")}>
-          <Ionicons name="home" size={24} color="#FFF" />
-        </Pressable>
-        <Pressable
-          style={styles.navButton}
-          onPress={() => navigation.navigate("AddHabit")}
-        >
-          <Ionicons name="add" size={28} color="#FFF" />
-        </Pressable>
-        <Pressable
-          style={styles.navButton}
-          onPress={() => navigation.navigate("settings")}
-        >
-          <Ionicons name="person" size={24} color="#FFF" />
-        </Pressable>
-      </HStack>
+      <BottomNavigation
+        isMenuOpen={isMenuOpen}
+        onToggleMenu={() => setIsMenuOpen((prev) => !prev)}
+      />
 
       {/* Details Modal */}
       <Modal
@@ -461,33 +286,21 @@ export default function HabitsList() {
         </View>
       </Modal>
 
-      {/* Edit Modal */}
-      <Modal
+      <HabitEditModal
         visible={!!editingHabit}
-        transparent
-        animationType="slide"
-        onRequestClose={closeEditModal}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Edit Habit</Text>
-            <TextInput
-              style={styles.editInput}
-              value={editingName}
-              onChangeText={setEditingName}
-              placeholder="Habit name"
-            />
-            <View style={styles.modalButtons}>
-              <Pressable onPress={saveEdit} style={styles.saveButton}>
-                <Text style={styles.buttonText}>Save</Text>
-              </Pressable>
-              <Pressable onPress={closeEditModal} style={styles.cancelButton}>
-                <Text style={styles.buttonText}>Cancel</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        onClose={closeEditModal}
+        onSave={saveEdit}
+        habitName={editingName}
+        onChangeHabitName={setEditingName}
+      />
+
+      {/* Add menu component */}
+      <AddHabitMenu
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+        onAddGoodHabit={handleAddGoodHabit}
+        onAddBadHabit={handleAddBadHabit}
+      />
     </LinearGradient>
   );
 }
@@ -495,18 +308,21 @@ export default function HabitsList() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 20,
   },
-  contentContainer: {
+  safeArea: {
     flex: 1,
-    position: "relative",
+  },
+  content: {
+    flex: 1,
+    paddingTop: 8,
   },
   calendarContainer: {
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
     paddingVertical: 15,
     marginBottom: 10,
     borderRadius: 20,
     marginHorizontal: 10,
+    backdropFilter: "blur(10px)",
   },
   calendarContent: {
     alignItems: "center",
@@ -518,15 +334,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginHorizontal: 5,
     borderRadius: 15,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "rgba(255, 255, 255, 0.06)",
   },
   calendarItemSelected: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#8B5CF6",
     transform: [{ scale: 1.05 }],
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowColor: "#8B5CF6",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
     elevation: 5,
   },
   calendarDay: {
@@ -570,15 +386,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   habitItem: {
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
     borderRadius: 15,
     marginBottom: 12,
     overflow: "hidden",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 5,
   },
   habitItemContent: {
     flexDirection: "row",
@@ -618,10 +434,17 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: "90%",
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    backgroundColor: "rgba(30, 27, 75, 0.95)",
     borderRadius: 20,
     padding: 20,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 10,
   },
   bigAvatar: {
     width: 72,
@@ -635,17 +458,17 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#1E293B",
+    color: "#FFFFFF",
     marginBottom: 16,
   },
   modalDays: {
     fontSize: 16,
-    color: "#64748B",
+    color: "rgba(255, 255, 255, 0.7)",
     marginBottom: 12,
   },
   modalDescription: {
     fontSize: 16,
-    color: "#334155",
+    color: "rgba(255, 255, 255, 0.9)",
     textAlign: "center",
     marginBottom: 24,
     lineHeight: 24,
@@ -704,9 +527,8 @@ const styles = StyleSheet.create({
   },
   waterProgress: {
     height: "100%",
-    backgroundColor: "#60A5FA",
+    backgroundColor: "#8B5CF6",
     borderRadius: 4,
-    transition: "width 0.3s ease",
   },
   waterGlassesContainer: {
     justifyContent: "center",
@@ -719,7 +541,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
     justifyContent: "center",
     alignItems: "center",
     transform: [{ scale: 1 }],
@@ -737,18 +559,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#60A5FA",
+    backgroundColor: "#8B5CF6",
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowColor: "#8B5CF6",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
     elevation: 5,
-    pressable: {
-      opacity: 0.8,
-      transform: [{ scale: 0.95 }],
-    }
   },
   waterAmount: {
     fontSize: 16,
@@ -764,10 +582,12 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderRadius: 20,
     padding: 12,
+    alignItems: "center",
   },
   filterLabel: {
     color: "#FFFFFF",
     fontSize: 16,
+    marginRight: 10,
   },
   filterText: {
     fontSize: 16,
@@ -779,7 +599,9 @@ const styles = StyleSheet.create({
   },
   habitsContainerContent: {
     paddingHorizontal: 16,
+    paddingTop: 8,
     paddingBottom: 20,
+    gap: 12,
   },
   habitContent: {
     padding: 16,
@@ -789,14 +611,14 @@ const styles = StyleSheet.create({
     height: 26,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: "#4CAF50",
+    borderColor: "#8B5CF6",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
   },
   checkmark: {
-    color: "#4CAF50",
+    color: "#8B5CF6",
     fontSize: 16,
     fontWeight: "bold",
   },
@@ -809,7 +631,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   habitItemCompleted: {
-    backgroundColor: "rgba(76, 175, 80, 0.2)",
+    backgroundColor: "rgba(139, 92, 246, 0.15)",
   },
   navigationContainer: {
     height: 80,
@@ -821,18 +643,19 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     backdropFilter: "blur(10px)",
+    zIndex: 2,
   },
   navButton: {
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#8B5CF6",
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowColor: "#8B5CF6",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
     elevation: 5,
   },
   modalButtons: {
@@ -842,7 +665,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   saveButton: {
-    backgroundColor: "#3B82F6",
+    backgroundColor: "#8B5CF6",
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 24,
@@ -850,17 +673,34 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   cancelButton: {
-    backgroundColor: "#EF4444",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 24,
     flex: 1,
     marginLeft: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
   },
   buttonText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
+  },
+  addButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    marginTop: -20,
+    backgroundColor: colors.primary[500],
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: colors.primary[500],
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+    zIndex: 3,
   },
 });

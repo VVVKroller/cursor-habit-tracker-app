@@ -1,19 +1,28 @@
-import React, { useState } from 'react';
-import { View, TextInput, Button, Alert, StyleSheet } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
-import api from '../services/api'
+import React, { useState } from "react";
+import { View, TextInput, Button, Alert, StyleSheet } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import api from "../services/api";
+import { useRoute } from "@react-navigation/native";
 
-export default function AddHabitScreen({ navigation }) {
-  const [habitName, setHabitName] = useState('');
-  const [description, setDescription] = useState('');
-  const [frequency, setFrequency] = useState('');
+// Add to route params type
+type AddHabitScreenParams = {
+  type: "good" | "bad";
+};
+
+export default function AddHabitScreen() {
+  const route = useRoute();
+  const { type } = route.params as AddHabitScreenParams;
+
+  const [habitName, setHabitName] = useState("");
+  const [description, setDescription] = useState("");
+  const [frequency, setFrequency] = useState("");
 
   const addHabit = async () => {
-    const token = await AsyncStorage.getItem('token');
+    const token = await AsyncStorage.getItem("token");
     try {
       await api.post(
-        '/habits',
+        "/habits",
         { name: habitName, description, frequency },
         {
           headers: {
@@ -21,10 +30,13 @@ export default function AddHabitScreen({ navigation }) {
           },
         }
       );
-      Alert.alert('Успех', 'Привычка добавлена');
+      Alert.alert("Успех", "Привычка добавлена");
       navigation.goBack();
     } catch (error) {
-      Alert.alert('Ошибка', error.response?.data?.error || 'Не удалось добавить привычку');
+      Alert.alert(
+        "Ошибка",
+        error.response?.data?.error || "Не удалось добавить привычку"
+      );
       console.error(error);
     }
   };
@@ -58,11 +70,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     padding: 10,
     marginVertical: 5,
     borderRadius: 5,

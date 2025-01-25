@@ -8,6 +8,10 @@ import {
   Pressable,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { colors } from "./utils/colors";
+import { BottomNavigation } from "./components/Navigation/BottomNavigation";
 
 type SettingsSectionProps = {
   title: string;
@@ -38,7 +42,7 @@ const SettingsItem = ({
   onPress,
   onValueChange,
   showArrow = true,
-  color = "#3B82F6",
+  color = colors.primary[500],
 }: SettingsItemProps) => (
   <Pressable
     style={styles.settingsItem}
@@ -47,14 +51,23 @@ const SettingsItem = ({
   >
     <View style={styles.settingsItemContent}>
       <View style={[styles.iconContainer, { backgroundColor: color }]}>
-        <Ionicons name={icon as any} size={20} color="#FFFFFF" />
+        <Ionicons name={icon as any} size={20} color={colors.text.primary} />
       </View>
       <Text style={styles.settingsItemLabel}>{label}</Text>
     </View>
     {typeof value === "boolean" ? (
-      <Switch value={value} onValueChange={onValueChange} />
+      <Switch
+        value={value}
+        onValueChange={onValueChange}
+        trackColor={{ false: colors.surface.light, true: colors.primary[500] }}
+        thumbColor={colors.text.primary}
+      />
     ) : showArrow ? (
-      <Ionicons name="chevron-forward" size={20} color="#64748B" />
+      <Ionicons
+        name="chevron-forward"
+        size={20}
+        color={colors.text.secondary}
+      />
     ) : null}
   </Pressable>
 );
@@ -65,109 +78,136 @@ export default function SettingsScreen() {
   const [healthSync, setHealthSync] = React.useState(true);
 
   return (
-    <ScrollView style={styles.container}>
-      <SettingsSection title="General">
-        <SettingsItem
-          icon="notifications"
-          label="Notifications"
-          value={notifications}
-          onValueChange={setNotifications}
-          color="#3B82F6"
-        />
-        <SettingsItem
-          icon="moon"
-          label="Dark Mode"
-          value={darkMode}
-          onValueChange={setDarkMode}
-          color="#6366F1"
-        />
-        <SettingsItem
-          icon="heart"
-          label="Health App Sync"
-          value={healthSync}
-          onValueChange={setHealthSync}
-          color="#EC4899"
-        />
-      </SettingsSection>
+    <LinearGradient
+      colors={[
+        colors.gradient.start,
+        colors.gradient.middle,
+        colors.gradient.end,
+      ]}
+      style={styles.container}
+    >
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView style={styles.scrollView}>
+          <Text style={styles.title}>Settings</Text>
 
-      <SettingsSection title="Account">
-        <SettingsItem
-          icon="person"
-          label="Profile"
-          onPress={() => console.log("Profile")}
-          color="#8B5CF6"
-        />
-        <SettingsItem
-          icon="lock-closed"
-          label="Privacy"
-          onPress={() => console.log("Privacy")}
-          color="#10B981"
-        />
-        <SettingsItem
-          icon="shield-checkmark"
-          label="Security"
-          onPress={() => console.log("Security")}
-          color="#F59E0B"
-        />
-      </SettingsSection>
+          <SettingsSection title="General">
+            <SettingsItem
+              icon="notifications"
+              label="Notifications"
+              value={notifications}
+              onValueChange={setNotifications}
+              color={colors.primary[500]}
+            />
+            <SettingsItem
+              icon="moon"
+              label="Dark Mode"
+              value={darkMode}
+              onValueChange={setDarkMode}
+              color={colors.primary[600]}
+            />
+            <SettingsItem
+              icon="heart"
+              label="Health App Sync"
+              value={healthSync}
+              onValueChange={setHealthSync}
+              color={colors.status.error}
+            />
+          </SettingsSection>
 
-      <SettingsSection title="Data">
-        <SettingsItem
-          icon="cloud-upload"
-          label="Backup Data"
-          onPress={() => console.log("Backup")}
-          color="#14B8A6"
-        />
-        <SettingsItem
-          icon="cloud-download"
-          label="Restore Data"
-          onPress={() => console.log("Restore")}
-          color="#6366F1"
-        />
-        <SettingsItem
-          icon="trash"
-          label="Clear All Data"
-          onPress={() => console.log("Clear")}
-          color="#EF4444"
-        />
-      </SettingsSection>
+          <SettingsSection title="Account">
+            <SettingsItem
+              icon="person"
+              label="Profile"
+              onPress={() => console.log("Profile")}
+              color={colors.primary[400]}
+            />
+            <SettingsItem
+              icon="lock-closed"
+              label="Privacy"
+              onPress={() => console.log("Privacy")}
+              color={colors.status.success}
+            />
+            <SettingsItem
+              icon="shield-checkmark"
+              label="Security"
+              onPress={() => console.log("Security")}
+              color={colors.status.warning}
+            />
+          </SettingsSection>
 
-      <SettingsSection title="About">
-        <SettingsItem
-          icon="information-circle"
-          label="App Version"
-          showArrow={false}
-          onPress={() => {}}
-          color="#64748B"
-        />
-        <SettingsItem
-          icon="document-text"
-          label="Terms of Service"
-          onPress={() => console.log("Terms")}
-          color="#64748B"
-        />
-        <SettingsItem
-          icon="help-circle"
-          label="Help & Support"
-          onPress={() => console.log("Help")}
-          color="#64748B"
-        />
-      </SettingsSection>
+          <SettingsSection title="Data">
+            <SettingsItem
+              icon="cloud-upload"
+              label="Backup Data"
+              onPress={() => console.log("Backup")}
+              color={colors.primary[300]}
+            />
+            <SettingsItem
+              icon="cloud-download"
+              label="Restore Data"
+              onPress={() => console.log("Restore")}
+              color={colors.primary[400]}
+            />
+            <SettingsItem
+              icon="trash"
+              label="Clear All Data"
+              onPress={() => console.log("Clear")}
+              color={colors.status.error}
+            />
+          </SettingsSection>
 
-      <Pressable
-        style={styles.logoutButton}
-        onPress={() => console.log("Logout")}
-      >
-        <Text style={styles.logoutText}>Log Out</Text>
-      </Pressable>
-    </ScrollView>
+          <SettingsSection title="About">
+            <SettingsItem
+              icon="information-circle"
+              label="App Version"
+              showArrow={false}
+              onPress={() => {}}
+              color={colors.text.secondary}
+            />
+            <SettingsItem
+              icon="document-text"
+              label="Terms of Service"
+              onPress={() => console.log("Terms")}
+              color={colors.text.secondary}
+            />
+            <SettingsItem
+              icon="help-circle"
+              label="Help & Support"
+              onPress={() => console.log("Help")}
+              color={colors.text.secondary}
+            />
+          </SettingsSection>
+
+          <Pressable
+            style={styles.logoutButton}
+            onPress={() => console.log("Logout")}
+          >
+            <Text style={styles.logoutText}>Log Out</Text>
+          </Pressable>
+        </ScrollView>
+      </SafeAreaView>
+      <BottomNavigation />
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8FAFC",
+  },
+  safeArea: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: "700",
+    color: colors.text.primary,
+    marginLeft: 16,
+    marginTop: 8,
+    marginBottom: 24,
   },
   section: {
     marginBottom: 24,
@@ -175,20 +215,18 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#64748B",
+    color: colors.text.secondary,
     marginLeft: 16,
     marginBottom: 8,
     textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   sectionContent: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface.medium,
     borderRadius: 16,
     marginHorizontal: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.border.light,
   },
   settingsItem: {
     flexDirection: "row",
@@ -197,7 +235,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
+    borderBottomColor: colors.border.light,
   },
   settingsItemContent: {
     flexDirection: "row",
@@ -213,18 +251,23 @@ const styles = StyleSheet.create({
   },
   settingsItemLabel: {
     fontSize: 16,
-    color: "#1E293B",
+    color: colors.text.primary,
   },
   logoutButton: {
     marginHorizontal: 16,
     marginVertical: 24,
-    backgroundColor: "#EF4444",
+    backgroundColor: colors.status.error,
     padding: 16,
     borderRadius: 12,
     alignItems: "center",
+    shadowColor: colors.status.error,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   logoutText: {
-    color: "#FFFFFF",
+    color: colors.text.primary,
     fontSize: 16,
     fontWeight: "600",
   },
