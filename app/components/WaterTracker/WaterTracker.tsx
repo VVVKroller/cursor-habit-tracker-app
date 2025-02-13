@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
 import { Ionicons } from "@expo/vector-icons";
@@ -12,6 +12,13 @@ interface WaterTrackerProps {
   waterIntake: number;
   setWaterIntake: (value: number | ((prev: number) => number)) => void;
 }
+
+// Helper function for haptics
+const triggerHaptic = () => {
+  if (Platform.OS !== "web") {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }
+};
 
 export function WaterTracker({
   waterIntake,
@@ -38,15 +45,15 @@ export function WaterTracker({
   };
 
   const handleIncrement = () => {
+    triggerHaptic();
     if (waterIntake < totalGlasses) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setWaterIntake((prev) => prev + 1);
     }
   };
 
   const handleDecrement = () => {
+    triggerHaptic();
     if (waterIntake > 0) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setWaterIntake((prev) => prev - 1);
     }
   };

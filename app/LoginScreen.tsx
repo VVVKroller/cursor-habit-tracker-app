@@ -38,7 +38,7 @@ export default function LoginScreen() {
               errorCallback: (error) => {
                 Alert.alert(
                   "Ошибка",
-                  error.response?.data?.error || "Н е удалось войти"
+                  error.response?.data?.error || "Не удалось войти"
                 );
               },
             })

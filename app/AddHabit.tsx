@@ -11,8 +11,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { Box } from "@/components/ui/box";
 import { VStack } from "@/components/ui/vstack";
 import { HStack } from "@/components/ui/hstack";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { Habit } from "./types";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const AVATARS = ["🏃‍♂️", "💪", "🧘‍♀️", "📚", "💧", "🥗", "😴", "🎯"];
@@ -24,8 +25,14 @@ type RootStackParamList = {
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-export default function AddHabit() {
+export default function AddHabit({
+  addHabit,
+}: {
+  addHabit: (habit: Habit) => void;
+}) {
   const navigation = useNavigation<NavigationProp>();
+  const route = useRoute();
+  const type = route.params?.type || "good";
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [goal, setGoal] = useState("");
@@ -42,7 +49,16 @@ export default function AddHabit() {
   };
 
   const handleCreate = () => {
-    // TODO: Implement habit creation
+    addHabit({
+      id: 0,
+      name: name,
+      daysCompleted: 0,
+      description: description,
+      type: type,
+      frequency: "daily",
+      isCompleted: false,
+      goal: parseInt(goal),
+    });
     navigation.navigate("Home");
   };
 

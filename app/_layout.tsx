@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import "@/global.css";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -8,18 +8,24 @@ import LoginScreen from "./LoginScreen";
 import RegisterScreen from "./RegisterScreen";
 import HabitsList from "./HabitsList";
 import AddHabit from "./AddHabit";
-import HomeScreen from "./HomeScreen";
-import AddHabitScreen from "./AddHabitScreen";
 import SettingsScreen from "./SettingsScreen";
 import FriendsScreen from "./screens/FriendsScreen";
+import { Habit } from "./types";
 
 const Stack = createNativeStackNavigator();
 
 export default function RootLayout() {
+  const [habits, setHabits] = useState<Habit[]>([]);
   return (
     <SafeAreaProvider>
       <GluestackUIProvider mode="light">
-        <Stack.Navigator initialRouteName="Home">
+        <Stack.Navigator 
+          initialRouteName="Home"
+          screenOptions={{
+            animation: 'none',
+            headerShown: false,
+          }}
+        >
           {/* Экран входа */}
           <Stack.Screen
             name="Login"
@@ -35,15 +41,16 @@ export default function RootLayout() {
           {/* Главный экран с привычками */}
           <Stack.Screen
             name="Home"
-            component={HabitsList}
+            component={() => <HabitsList habits={habits} setHabits={setHabits} />}
             options={{
               headerShown: false,
+              animation: 'none',
             }}
           />
           {/* Экран добавления новой привычки */}
           <Stack.Screen
             name="AddHabit"
-            component={AddHabit}
+            component={() => <AddHabit addHabit={(habit: Habit) => setHabits([...habits, habit])} />}
             options={{ title: "Добавить привычку" }}
           />
           <Stack.Screen
@@ -51,6 +58,7 @@ export default function RootLayout() {
             component={SettingsScreen}
             options={{
               headerShown: false,
+              animation: 'none',
             }}
           />
           <Stack.Screen
@@ -58,6 +66,7 @@ export default function RootLayout() {
             component={FriendsScreen}
             options={{
               headerShown: false,
+              animation: 'none',
             }}
           />
         </Stack.Navigator>

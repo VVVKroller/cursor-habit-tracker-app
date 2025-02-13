@@ -39,6 +39,8 @@ import { HabitEditModal } from "./components/HabitEditModal/HabitEditModal";
 import { AddHabitMenu } from "./components/AddHabitMenu/AddHabitMenu";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BottomNavigation } from "./components/Navigation/BottomNavigation";
+import { StatusCircles } from "./components/StatusCircles/StatusCircles";
+import { MotiView } from "moti";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CALENDAR_ITEM_WIDTH = SCREEN_WIDTH / 7;
@@ -70,7 +72,70 @@ const springConfig = {
   mass: 1,
 };
 
-export default function HabitsList() {
+// Add this component for the modal
+const WaterTrackerModal = ({
+  visible,
+  onClose,
+  waterIntake,
+  setWaterIntake,
+  circlePosition,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  waterIntake: number;
+  setWaterIntake: (value: number | ((prev: number) => number)) => void;
+  circlePosition: { x: number; y: number };
+}) => {
+  if (!visible) return null;
+
+  return (
+    <View style={styles.modalOverlay}>
+      <MotiView
+        from={{
+          opacity: 0,
+        }}
+        animate={{
+          opacity: 1,
+        }}
+        transition={{
+          type: "timing",
+          duration: 200,
+        }}
+        style={styles.modalBackdrop}
+        onTouchEnd={onClose}
+      />
+      <MotiView
+        from={{
+          translateY: 100,
+          opacity: 0,
+        }}
+        animate={{
+          translateY: 0,
+          opacity: 1,
+        }}
+        transition={{
+          type: "spring",
+          damping: 20,
+          mass: 1.1,
+        }}
+        style={styles.waterTrackerModal}
+      >
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>Water Tracker</Text>
+          <Pressable style={styles.modalCloseButton} onPress={onClose}>
+            <Ionicons name="close" size={24} color={colors.text.secondary} />
+          </Pressable>
+        </View>
+        <WaterTracker
+          waterIntake={waterIntake}
+          setWaterIntake={setWaterIntake}
+        />
+      </MotiView>
+    </View>
+  );
+};
+
+export default function HabitsList({habits, setHabits}: {habits: Habit[], setHabits: (habits: Habit[]) => void}) {
   // Add navigation hook
   const navigation = useNavigation<NavigationProp>();
   const allDates = generateDatesRange();
@@ -85,7 +150,6 @@ export default function HabitsList() {
 
   const [selectedDayIndex, setSelectedDayIndex] =
     useState<number>(initialIndex);
-  const [habits, setHabits] = useState<Habit[]>(habitsData);
   const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   const [editingName, setEditingName] = useState<string>("");
@@ -211,6 +275,20 @@ export default function HabitsList() {
     navigation.navigate("AddHabit", { type: "bad" });
   };
 
+  // Add state for steps
+  const [steps, setSteps] = useState(6500);
+  const [showWaterTracker, setShowWaterTracker] = useState(false);
+
+  // Add state for circle position
+  const [circlePosition, setCirclePosition] = useState({ x: 0, y: 0 });
+
+  // Update the StatusCircles onWaterPress to include position
+  const handleWaterPress = (event: any) => {
+    const { pageX, pageY } = event.nativeEvent;
+    setCirclePosition({ x: pageX, y: pageY });
+    setShowWaterTracker(true);
+  };
+
   return (
     <LinearGradient
       colors={[
@@ -222,6 +300,20 @@ export default function HabitsList() {
     >
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.content}>
+          {/* Create a header container */}
+          <View style={styles.header}>
+            <View style={styles.headerLeft}>
+              <Text style={styles.headerTitle}>My Habits</Text>
+            </View>
+            <StatusCircles
+              steps={steps}
+              stepsGoal={10000}
+              waterIntake={waterIntake}
+              waterGoal={8}
+              onWaterPress={handleWaterPress}
+            />
+          </View>
+
           <Calendar
             allDates={allDates}
             selectedDayIndex={selectedDayIndex}
@@ -249,11 +341,6 @@ export default function HabitsList() {
                 onToggleCompletion={() => toggleHabitCompletion(habit.id)}
               />
             ))}
-
-            <WaterTracker
-              waterIntake={waterIntake}
-              setWaterIntake={setWaterIntake}
-            />
           </Animated.ScrollView>
         </View>
       </SafeAreaView>
@@ -265,10 +352,10 @@ export default function HabitsList() {
 
       {/* Details Modal */}
       <Modal
-        visible={!!selectedHabit}
+        visible={selectedHabit !== null}
         transparent
         animationType="fade"
-        onRequestClose={closeModal}
+        onRequestClose={() => setSelectedHabit(null)}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -279,7 +366,10 @@ export default function HabitsList() {
             <Text style={styles.modalDescription}>
               {selectedHabit?.description}
             </Text>
-            <Pressable onPress={closeModal} style={styles.closeButton}>
+            <Pressable 
+              onPress={() => setSelectedHabit(null)} 
+              style={styles.closeButton}
+            >
               <Text style={styles.buttonText}>Close</Text>
             </Pressable>
           </View>
@@ -300,6 +390,15 @@ export default function HabitsList() {
         onClose={() => setIsMenuOpen(false)}
         onAddGoodHabit={handleAddGoodHabit}
         onAddBadHabit={handleAddBadHabit}
+      />
+
+      {/* Add WaterTracker Modal */}
+      <WaterTrackerModal
+        visible={showWaterTracker}
+        onClose={() => setShowWaterTracker(false)}
+        waterIntake={waterIntake}
+        setWaterIntake={setWaterIntake}
+        circlePosition={circlePosition}
       />
     </LinearGradient>
   );
@@ -428,12 +527,14 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.3)",
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
     justifyContent: "center",
     alignItems: "center",
+    padding: 20,
   },
   modalContent: {
     width: "90%",
+    maxWidth: 400,
     backgroundColor: "rgba(30, 27, 75, 0.95)",
     borderRadius: 20,
     padding: 20,
@@ -445,15 +546,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 16,
     elevation: 10,
-  },
-  bigAvatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: "#E2E8F0",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 16,
   },
   modalTitle: {
     fontSize: 24,
@@ -474,164 +566,59 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   closeButton: {
-    backgroundColor: "#3B82F6",
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  closeButtonCancel: {
     backgroundColor: "#EF4444",
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 16,
   },
-  editInput: {
-    width: "100%",
-    height: 50,
-    borderColor: "#CBD5E1",
-    borderWidth: 2,
-    borderRadius: 12,
-    paddingHorizontal: 16,
+  buttonText: {
+    color: "#FFFFFF",
     fontSize: 16,
-    color: "#1E293B",
-    backgroundColor: "#FFFFFF",
+    fontWeight: "bold",
+    textAlign: "center",
   },
-  waterTrackerContainer: {
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    padding: 20,
-    borderRadius: 20,
-    marginTop: 20,
-    marginBottom: 20,
-    overflow: "hidden",
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
   },
-  waterTrackerHeader: {
+  waterTrackerModal: {
+    backgroundColor: colors.surface.strong,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    padding: 24,
+    paddingBottom: 40,
+    borderWidth: 1,
+    borderColor: colors.border.medium,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 24,
+    elevation: 24,
+  },
+  modalHeader: {
+    flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 15,
-  },
-  waterTrackerTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-  },
-  waterTrackerSubtitle: {
-    fontSize: 14,
-    color: "rgba(255, 255, 255, 0.7)",
-  },
-  waterProgressContainer: {
-    height: 8,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderRadius: 4,
-    marginBottom: 20,
-    overflow: "hidden",
-  },
-  waterProgress: {
-    height: "100%",
-    backgroundColor: "#8B5CF6",
-    borderRadius: 4,
-  },
-  waterGlassesContainer: {
-    justifyContent: "center",
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
     marginBottom: 20,
   },
-  waterGlass: {
+  modalCloseButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    backgroundColor: colors.surface.medium,
     justifyContent: "center",
     alignItems: "center",
-    transform: [{ scale: 1 }],
-    transition: "transform 0.2s",
+    borderWidth: 1,
+    borderColor: colors.border.light,
   },
-  waterIcon: {
-    transform: [{ translateY: 2 }],
-  },
-  waterControls: {
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 10,
-  },
-  waterControlButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#8B5CF6",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#8B5CF6",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  waterAmount: {
-    fontSize: 16,
-    color: "#FFFFFF",
-    fontWeight: "600",
-  },
-  bottomSpacing: {
-    height: 100,
-  },
-  filterContainer: {
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    marginHorizontal: 10,
-    marginBottom: 15,
-    borderRadius: 20,
-    padding: 12,
-    alignItems: "center",
-  },
-  filterLabel: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    marginRight: 10,
-  },
-  filterText: {
-    fontSize: 16,
-    color: "#FFFFFF",
-    marginLeft: 8,
-  },
-  habitsContainer: {
-    flex: 1,
-  },
-  habitsContainerContent: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 20,
-    gap: 12,
-  },
-  habitContent: {
-    padding: 16,
-  },
-  checkbox: {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: "#8B5CF6",
+  bigAvatar: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "#E2E8F0",
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 12,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-  },
-  checkmark: {
-    color: "#8B5CF6",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  habitInfo: {
-    flex: 1,
-  },
-  habitFrequency: {
-    fontSize: 14,
-    color: "rgba(255, 255, 255, 0.7)",
-    marginTop: 4,
-  },
-  habitItemCompleted: {
-    backgroundColor: "rgba(139, 92, 246, 0.15)",
+    marginBottom: 16,
   },
   navigationContainer: {
     height: 80,
@@ -682,25 +669,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.2)",
   },
-  buttonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  addButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    marginTop: -20,
-    backgroundColor: colors.primary[500],
-    justifyContent: "center",
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    shadowColor: colors.primary[500],
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-    zIndex: 3,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    marginBottom: 8,
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: colors.text.primary,
   },
 });
