@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "@/global.css";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -11,18 +11,27 @@ import AddHabit from "./AddHabit";
 import SettingsScreen from "./SettingsScreen";
 import FriendsScreen from "./screens/FriendsScreen";
 import { Habit } from "./types";
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
 const Stack = createNativeStackNavigator();
 
 export default function RootLayout() {
   const [habits, setHabits] = useState<Habit[]>([]);
+  useEffect(() => {
+    const fetchHabits = async () => {
+      const habits = await AsyncStorage.getItem("habits");
+      if (habits) {
+        setHabits(JSON.parse(habits));
+      }
+    };
+    fetchHabits();
+  }, []);
   return (
     <SafeAreaProvider>
       <GluestackUIProvider mode="light">
-        <Stack.Navigator 
+        <Stack.Navigator
           initialRouteName="Home"
           screenOptions={{
-            animation: 'none',
+            animation: "none",
             headerShown: false,
           }}
         >
@@ -41,16 +50,26 @@ export default function RootLayout() {
           {/* Главный экран с привычками */}
           <Stack.Screen
             name="Home"
-            component={() => <HabitsList habits={habits} setHabits={setHabits} />}
+            component={() => (
+              <HabitsList habits={habits} setHabits={setHabits} />
+            )}
             options={{
               headerShown: false,
-              animation: 'none',
+              animation: "none",
             }}
           />
           {/* Экран добавления новой привычки */}
           <Stack.Screen
             name="AddHabit"
-            component={() => <AddHabit addHabit={(habit: Habit) => setHabits([...habits, habit])} />}
+            component={() => (
+              <AddHabit
+                addHabit={(habit: Habit) => {
+                  const newHabits = [...habits, habit];
+                  AsyncStorage.setItem("habits", JSON.stringify(newHabits));
+                  setHabits(newHabits);
+                }}
+              />
+            )}
             options={{ title: "Добавить привычку" }}
           />
           <Stack.Screen
@@ -58,7 +77,7 @@ export default function RootLayout() {
             component={SettingsScreen}
             options={{
               headerShown: false,
-              animation: 'none',
+              animation: "none",
             }}
           />
           <Stack.Screen
@@ -66,7 +85,7 @@ export default function RootLayout() {
             component={FriendsScreen}
             options={{
               headerShown: false,
-              animation: 'none',
+              animation: "none",
             }}
           />
         </Stack.Navigator>

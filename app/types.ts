@@ -1,5 +1,5 @@
 export interface Habit {
-  id: number;
+  id: string;
   name: string;
   daysCompleted: number;
   description: string;
@@ -21,5 +21,4 @@ type RootStackParamList = {
     type: "good" | "bad";
   };
   friends: undefined;
-  // ... other screens
 };

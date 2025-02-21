@@ -1,44 +1,44 @@
 export const colors = {
-  // Primary colors
+  // Primary colors - Using a calming teal/mint palette
   primary: {
-    50: "#F5F3FF",
-    100: "#EDE9FE",
-    200: "#DDD6FE",
-    300: "#C4B5FD",
-    400: "#A78BFA",
-    500: "#8B5CF6", // Main purple
-    600: "#7C3AED",
-    700: "#6D28D9",
-    800: "#5B21B6",
-    900: "#4C1D95",
+    50: "#E6FAF5",
+    100: "#B3F1E1",
+    200: "#80E8CD",
+    300: "#4DDEB8",
+    400: "#1AD5A4",
+    500: "#00BC90", // Main accent color
+    600: "#009675",
+    700: "#007159",
+    800: "#004B3C",
+    900: "#00261E",
   },
-  // Background gradients
+  // Background gradients - Soft, calming gradient
   gradient: {
-    start: "#0F172A", // Dark blue
-    middle: "#1E1B4B", // Dark indigo
-    end: "#2E1065", // Dark purple
+    start: "#1A1F25",  // Dark slate
+    middle: "#1F2937", // Cool gray
+    end: "#243042",    // Deep blue-gray
   },
   // Surface colors (for cards, modals, etc.)
   surface: {
-    light: "rgba(255, 255, 255, 0.08)",
-    medium: "rgba(255, 255, 255, 0.12)",
-    strong: "rgba(255, 255, 255, 0.16)",
+    light: "rgba(255, 255, 255, 0.06)",
+    medium: "rgba(255, 255, 255, 0.09)",
+    strong: "rgba(255, 255, 255, 0.12)",
   },
   // Text colors
   text: {
     primary: "#FFFFFF",
-    secondary: "rgba(255, 255, 255, 0.7)",
-    tertiary: "rgba(255, 255, 255, 0.5)",
+    secondary: "rgba(255, 255, 255, 0.8)",
+    tertiary: "rgba(255, 255, 255, 0.6)",
   },
   // Border colors
   border: {
-    light: "rgba(255, 255, 255, 0.1)",
-    medium: "rgba(255, 255, 255, 0.15)",
+    light: "rgba(255, 255, 255, 0.08)",
+    medium: "rgba(255, 255, 255, 0.12)",
   },
   // Status colors
   status: {
-    success: "#10B981", // Emerald
-    warning: "#F59E0B", // Amber
-    error: "#EF4444", // Red
+    success: "#34D399", // Emerald green
+    warning: "#FBBF24", // Warm yellow
+    error: "#FB7185",   // Soft red
   },
 };

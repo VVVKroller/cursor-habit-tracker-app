@@ -66,7 +66,7 @@ export function HabitsToggle({ showGoodHabits, onToggle }: HabitsToggleProps) {
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 16,
+    marginHorizontal: 20,
     marginBottom: 20,
     marginTop: 8,
     borderRadius: 20,

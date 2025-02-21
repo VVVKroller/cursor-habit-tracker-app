@@ -6,7 +6,7 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import { colors } from "../../utils/colors";
 
 interface CalendarProps {
-  allDates: Array<{ fullDate: Date; label: string }>;
+  allDates: Array<{ fullDate: Date; label: string; keyID: string }>;
   selectedDayIndex: number;
   onSelectDay: (idx: number) => void;
   scrollRef: React.RefObject<ScrollView>;
@@ -46,7 +46,7 @@ export function Calendar({
             const today = isToday(item.fullDate);
             return (
               <Pressable
-                key={item.label}
+                key={item.keyID}
                 onPress={() => onSelectDay(idx)}
                 style={({ pressed }) => [
                   styles.calendarItem,
@@ -91,19 +91,11 @@ export function Calendar({
 
 const styles = StyleSheet.create({
   calendarContainer: {
-    marginTop: 16,
-    marginVertical: 10,
-    marginHorizontal: 16,
-    borderRadius: 24,
-    overflow: "hidden",
-    backgroundColor: colors.surface.light,
-    borderWidth: 1,
-    borderColor: colors.border.light,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    elevation: 8,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    paddingVertical: 15,
+    marginBottom: 10,
+    marginHorizontal: 10,
+    backdropFilter: "blur(10px)",
   },
   gradient: {
     paddingVertical: 16,

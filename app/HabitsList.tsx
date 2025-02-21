@@ -135,7 +135,16 @@ const WaterTrackerModal = ({
   );
 };
 
-export default function HabitsList({habits, setHabits}: {habits: Habit[], setHabits: (habits: Habit[]) => void}) {
+// Обновим тип для setHabits
+type SetHabitsType = React.Dispatch<React.SetStateAction<Habit[]>>;
+
+export default function HabitsList({
+  habits,
+  setHabits,
+}: {
+  habits: Habit[];
+  setHabits: SetHabitsType;
+}) {
   // Add navigation hook
   const navigation = useNavigation<NavigationProp>();
   const allDates = generateDatesRange();
@@ -150,7 +159,6 @@ export default function HabitsList({habits, setHabits}: {habits: Habit[], setHab
 
   const [selectedDayIndex, setSelectedDayIndex] =
     useState<number>(initialIndex);
-  const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   const [editingName, setEditingName] = useState<string>("");
   const [showGoodHabits, setShowGoodHabits] = useState<boolean>(true);
@@ -181,6 +189,8 @@ export default function HabitsList({habits, setHabits}: {habits: Habit[], setHab
       ),
     [habits, showGoodHabits]
   );
+
+
 
   // Add a ref for tracking if initial scroll has happened
   const hasScrolledToToday = useRef(false);
@@ -215,16 +225,6 @@ export default function HabitsList({habits, setHabits}: {habits: Habit[], setHab
 
   function handleSelectDay(idx: number) {
     setSelectedDayIndex(idx);
-    const shuffled = shuffleArray([...habits]);
-    setHabits(shuffled);
-  }
-
-  function openHabitDetails(habit: Habit) {
-    setSelectedHabit(habit);
-  }
-
-  function closeModal() {
-    setSelectedHabit(null);
   }
 
   function handleEditHabit(habit: Habit) {
@@ -251,14 +251,22 @@ export default function HabitsList({habits, setHabits}: {habits: Habit[], setHab
     setWaterIntake((prev) => (prev < 8 ? prev + 1 : prev));
   }
 
-  function toggleHabitCompletion(habitId: number) {
-    setHabits((prevHabits) =>
-      prevHabits.map((habit) =>
-        habit.id === habitId
-          ? { ...habit, isCompleted: !habit.isCompleted }
-          : habit
-      )
-    );
+  // Обновим функцию toggleHabitCompletion
+  function toggleHabitCompletion(habitId: string) {
+    setHabits((prevHabits: Habit[]) => {
+      // Создаем новый массив
+      const newHabits = [...prevHabits];
+      // Находим нужную привычку
+      const habitIndex = newHabits.findIndex((h) => h.id === habitId);
+      if (habitIndex !== -1) {
+        // Обновляем только одну привычку
+        newHabits[habitIndex] = {
+          ...newHabits[habitIndex],
+          isCompleted: !newHabits[habitIndex].isCompleted,
+        };
+      }
+      return newHabits;
+    });
   }
 
   // Add state for menu
@@ -336,7 +344,7 @@ export default function HabitsList({habits, setHabits}: {habits: Habit[], setHab
               <HabitItem
                 key={habit.id}
                 habit={habit}
-                onPress={() => openHabitDetails(habit)}
+                onPress={() => toggleHabitCompletion(habit.id)}
                 onEdit={() => handleEditHabit(habit)}
                 onToggleCompletion={() => toggleHabitCompletion(habit.id)}
               />
@@ -349,32 +357,6 @@ export default function HabitsList({habits, setHabits}: {habits: Habit[], setHab
         isMenuOpen={isMenuOpen}
         onToggleMenu={() => setIsMenuOpen((prev) => !prev)}
       />
-
-      {/* Details Modal */}
-      <Modal
-        visible={selectedHabit !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setSelectedHabit(null)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{selectedHabit?.name}</Text>
-            <Text style={styles.modalDays}>
-              Completed: {selectedHabit?.daysCompleted} days
-            </Text>
-            <Text style={styles.modalDescription}>
-              {selectedHabit?.description}
-            </Text>
-            <Pressable 
-              onPress={() => setSelectedHabit(null)} 
-              style={styles.closeButton}
-            >
-              <Text style={styles.buttonText}>Close</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
 
       <HabitEditModal
         visible={!!editingHabit}
@@ -599,7 +581,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 4,
   },
   modalCloseButton: {
     width: 44,
@@ -674,8 +656,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 16,
-    marginBottom: 8,
+    paddingVertical: 8,
+    marginBottom: 4,
   },
   headerLeft: {
     flex: 1,
@@ -684,5 +666,12 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "700",
     color: colors.text.primary,
+  },
+  habitsContainer: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  habitsContainerContent: {
+    paddingBottom: 100,
   },
 });

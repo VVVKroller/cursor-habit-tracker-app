@@ -12,6 +12,7 @@ export function generateDatesRange() {
     result.push({
       fullDate: new Date(current),
       label: dateStr,
+      keyID: dateStr + current.getMonth(),
     });
     current.setDate(current.getDate() + 1);
   }

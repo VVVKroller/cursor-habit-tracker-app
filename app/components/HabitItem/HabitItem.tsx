@@ -13,19 +13,28 @@ interface HabitItemProps {
   onToggleCompletion: () => void;
 }
 
-export function HabitItem({
+export const HabitItem = React.memo(function HabitItem({
   habit,
   onPress,
   onEdit,
   onToggleCompletion,
 }: HabitItemProps) {
+  const handleToggle = React.useCallback(() => {
+    onToggleCompletion();
+  }, [onToggleCompletion]);
+
+  const handleEdit = React.useCallback((e: any) => {
+    e.stopPropagation();
+    onEdit();
+  }, [onEdit]);
+
   return (
     <Pressable
-      onPress={onPress}
+      onPress={handleToggle}
       style={[styles.habitItem, habit.isCompleted && styles.habitItemCompleted]}
     >
       <HStack style={styles.habitContent}>
-        <Pressable style={styles.checkbox} onPress={onToggleCompletion}>
+        <Pressable style={styles.checkbox} onPress={handleToggle}>
           {habit.isCompleted && <Text style={styles.checkmark}>✓</Text>}
         </Pressable>
         <VStack style={styles.habitInfo}>
@@ -35,18 +44,15 @@ export function HabitItem({
           </Text>
         </VStack>
         <Pressable
-          onPress={(e) => {
-            e.stopPropagation();
-            onEdit();
-          }}
+          onPress={handleEdit}
           style={styles.editButton}
         >
-          <Ionicons name="ellipsis-horizontal" size={24} color="#FFFFFF" />
+          <Ionicons name="ellipsis-vertical" size={24} color="#FFFFFF" />
         </Pressable>
       </HStack>
     </Pressable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   habitItem: {
@@ -96,7 +102,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   habitItemCompleted: {
-    backgroundColor: `${colors.primary[500]}15`, // 15 is opacity in hex
+    backgroundColor: `${colors.primary[500]}25`,
+    borderColor: colors.primary[500],
+    borderWidth: 1,
   },
   editButton: {
     padding: 8,
