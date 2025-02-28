@@ -9,6 +9,7 @@ import {
   TextInput,
   Dimensions,
   Switch,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Box } from "@/components/ui/box";
@@ -190,8 +191,6 @@ export default function HabitsList({
     [habits, showGoodHabits]
   );
 
-
-
   // Add a ref for tracking if initial scroll has happened
   const hasScrolledToToday = useRef(false);
 
@@ -297,6 +296,95 @@ export default function HabitsList({
     setShowWaterTracker(true);
   };
 
+  // Получаем день недели из выбранной даты
+  const getWeekDay = (date: Date): WeekDay => {
+    const day = date.getDay();
+    // Преобразуем из Sunday = 0 в Monday = 0
+    return ((day + 6) % 7) as WeekDay;
+  };
+
+  if (filteredHabits.length === 0) {
+    return (
+      <LinearGradient
+        colors={[
+          colors.gradient.start,
+          colors.gradient.middle,
+          colors.gradient.end,
+        ]}
+        style={styles.container}
+      >
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.content}>
+            {/* Header */}
+            <View style={styles.header}>
+              <View style={styles.headerLeft}>
+                <Text style={styles.headerTitle}>My Habits</Text>
+              </View>
+              <StatusCircles
+                steps={steps}
+                stepsGoal={10000}
+                waterIntake={waterIntake}
+                waterGoal={8}
+                onWaterPress={handleWaterPress}
+              />
+            </View>
+
+            <Calendar
+              allDates={allDates}
+              selectedDayIndex={selectedDayIndex}
+              onSelectDay={handleSelectDay}
+              scrollRef={scrollRef}
+            />
+
+            <HabitsToggle
+              showGoodHabits={showGoodHabits}
+              onToggle={setShowGoodHabits}
+            />
+
+            {/* Empty State */}
+            <View style={[styles.emptyContainer, { zIndex: 0 }]}>
+              <VStack style={styles.emptyContent}>
+                <View style={styles.emptyIconContainer}>
+                  <Ionicons 
+                    name="add-circle-outline" 
+                    size={64} 
+                    color={colors.text.primary} 
+                  />
+                </View>
+                <Text style={styles.emptyTitle}>No habits yet</Text>
+                <Text style={styles.emptyText}>
+                  Start building better habits by adding your first one
+                </Text>
+              </VStack>
+            </View>
+          </View>
+        </SafeAreaView>
+
+        <BottomNavigation
+          isMenuOpen={isMenuOpen}
+          onToggleMenu={() => setIsMenuOpen((prev) => !prev)}
+        />
+
+        {/* Add menu component */}
+        <AddHabitMenu
+          isOpen={isMenuOpen}
+          onClose={() => setIsMenuOpen(false)}
+          onAddGoodHabit={handleAddGoodHabit}
+          onAddBadHabit={handleAddBadHabit}
+        />
+
+        {/* Add WaterTracker Modal */}
+        <WaterTrackerModal
+          visible={showWaterTracker}
+          onClose={() => setShowWaterTracker(false)}
+          waterIntake={waterIntake}
+          setWaterIntake={setWaterIntake}
+          circlePosition={circlePosition}
+        />
+      </LinearGradient>
+    );
+  }
+
   return (
     <LinearGradient
       colors={[
@@ -347,6 +435,7 @@ export default function HabitsList({
                 onPress={() => toggleHabitCompletion(habit.id)}
                 onEdit={() => handleEditHabit(habit)}
                 onToggleCompletion={() => toggleHabitCompletion(habit.id)}
+                selectedDay={getWeekDay(allDates[selectedDayIndex].fullDate)}
               />
             ))}
           </Animated.ScrollView>
@@ -673,5 +762,40 @@ const styles = StyleSheet.create({
   },
   habitsContainerContent: {
     paddingBottom: 100,
+  },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    marginTop: -40, // Компенсируем отступ, чтобы центрировать контент
+  },
+  emptyContent: {
+    alignItems: 'center',
+    gap: 16,
+  },
+  emptyIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: colors.surface.medium,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border.medium,
+    marginBottom: 8,
+  },
+  emptyTitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: colors.text.primary,
+    textAlign: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: colors.text.secondary,
+    textAlign: 'center',
+    lineHeight: 24,
+    maxWidth: 280,
   },
 });

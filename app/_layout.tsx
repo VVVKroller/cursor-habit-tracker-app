@@ -12,11 +12,30 @@ import SettingsScreen from "./SettingsScreen";
 import FriendsScreen from "./screens/FriendsScreen";
 import { Habit } from "./types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Notifications from "expo-notifications";
+
 const Stack = createNativeStackNavigator();
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
+});
 
 export default function RootLayout() {
   const [habits, setHabits] = useState<Habit[]>([]);
   useEffect(() => {
+    setTimeout(() => {
+      Notifications.scheduleNotificationAsync({
+        content: {
+          title: "Look at that notification",
+          body: "I'm so proud of myself!",
+        },
+        trigger: null,
+      });
+    }, /*15000 */);
     const fetchHabits = async () => {
       const habits = await AsyncStorage.getItem("habits");
       if (habits) {

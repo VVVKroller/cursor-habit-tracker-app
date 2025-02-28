@@ -55,13 +55,18 @@ export default function AddHabit({
   };
 
   const handleCreate = () => {
+    if (selectedDays.length === 0) {
+      // Можно добавить Alert с предупреждением
+      return;
+    }
+
     addHabit({
       id: crypto.randomUUID(),
       name: name,
       daysCompleted: 0,
       description: description,
       type: type,
-      frequency: "daily",
+      frequency: selectedDays as WeekDay[],
       isCompleted: false,
       goal: parseInt(goal),
     });

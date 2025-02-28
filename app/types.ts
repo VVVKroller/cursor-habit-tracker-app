@@ -1,12 +1,14 @@
+export type WeekDay = 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0 - Monday, 6 - Sunday
+
 export interface Habit {
   id: string;
   name: string;
-  daysCompleted: number;
-  description: string;
+  description?: string;
   type: "good" | "bad";
-  frequency: "daily" | "weekly";
-  isCompleted?: boolean;
-  goal?: number;
+  daysCompleted: number;
+  frequency: WeekDay[]; // Изменяем тип с "daily" на массив дней недели
+  isCompleted: boolean;
+  goal: number;
 }
 
 export interface DayItem {

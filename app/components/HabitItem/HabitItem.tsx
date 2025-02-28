@@ -1,24 +1,35 @@
 import React from "react";
-import { Text, Pressable, StyleSheet } from "react-native";
+import { Text, Pressable, StyleSheet, View } from "react-native";
 import { HStack } from "@/components/ui/hstack";
 import { VStack } from "@/components/ui/vstack";
 import { Ionicons } from "@expo/vector-icons";
 import { Habit } from "@/app/types";
 import { colors } from "../../utils/colors";
+import { WeekDay } from "@/app/types";
 
 interface HabitItemProps {
   habit: Habit;
   onPress: () => void;
   onEdit: () => void;
   onToggleCompletion: () => void;
+  selectedDay: number;
 }
 
-export const HabitItem = React.memo(function HabitItem({
-  habit,
-  onPress,
-  onEdit,
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+export function HabitItem({ 
+  habit, 
+  onPress, 
+  onEdit, 
   onToggleCompletion,
+  selectedDay 
 }: HabitItemProps) {
+  const shouldShowHabit = habit.frequency.includes(selectedDay as WeekDay);
+
+  if (!shouldShowHabit) {
+    return null;
+  }
+
   const handleToggle = React.useCallback(() => {
     onToggleCompletion();
   }, [onToggleCompletion]);
@@ -39,20 +50,37 @@ export const HabitItem = React.memo(function HabitItem({
         </Pressable>
         <VStack style={styles.habitInfo}>
           <Text style={styles.habitName}>{habit.name}</Text>
-          <Text style={styles.habitFrequency}>
-            {habit.frequency === "daily" ? "Daily" : "Weekly"}
-          </Text>
+          <HStack style={styles.daysContainer}>
+            {WEEKDAYS.map((day, index) => (
+              <View
+                key={day}
+                style={[
+                  styles.dayCircle,
+                  habit.frequency.includes(index as WeekDay) && styles.dayCircleSelected
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.dayText,
+                    habit.frequency.includes(index as WeekDay) && styles.dayTextSelected
+                  ]}
+                >
+                  {day}
+                </Text>
+              </View>
+            ))}
+          </HStack>
         </VStack>
         <Pressable
           onPress={handleEdit}
           style={styles.editButton}
         >
-          <Ionicons name="ellipsis-vertical" size={24} color="#FFFFFF" />
+          <Text style={styles.editButtonText}>⋮</Text>
         </Pressable>
       </HStack>
     </Pressable>
   );
-});
+}
 
 const styles = StyleSheet.create({
   habitItem: {
@@ -107,8 +135,42 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   editButton: {
-    padding: 8,
-    borderRadius: 20,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: "rgba(255, 255, 255, 0.1)",
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editButtonText: {
+    color: colors.text.primary,
+    fontSize: 20,
+    lineHeight: 24,
+  },
+  daysContainer: {
+    marginTop: 8,
+    gap: 2,
+  },
+  dayCircle: {
+    width: 32,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface.medium,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+  },
+  dayCircleSelected: {
+    backgroundColor: colors.primary[500],
+    borderColor: colors.primary[500],
+  },
+  dayText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors.text.secondary,
+  },
+  dayTextSelected: {
+    color: colors.text.primary,
   },
 });
