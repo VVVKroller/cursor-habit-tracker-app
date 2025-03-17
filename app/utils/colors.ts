@@ -14,15 +14,15 @@ export const colors = {
   },
   // Background gradients - Soft, calming gradient
   gradient: {
-    start: "#1A1F25",  // Dark slate
+    start: "#1A1F25", // Dark slate
     middle: "#1F2937", // Cool gray
-    end: "#243042",    // Deep blue-gray
+    end: "#243042", // Deep blue-gray
   },
   // Surface colors (for cards, modals, etc.)
   surface: {
-    light: "rgba(255, 255, 255, 0.06)",
-    medium: "rgba(255, 255, 255, 0.09)",
-    strong: "rgba(255, 255, 255, 0.12)",
+    light: "#2A303C", // Темно-серый с легким синим оттенком
+    medium: "#323845", // Чуть более темный серый
+    strong: "#3B424F", // Самый темный серый
   },
   // Text colors
   text: {
@@ -39,6 +39,6 @@ export const colors = {
   status: {
     success: "#34D399", // Emerald green
     warning: "#FBBF24", // Warm yellow
-    error: "#FB7185",   // Soft red
+    error: "#FB7185", // Soft red
   },
 };

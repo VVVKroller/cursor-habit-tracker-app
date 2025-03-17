@@ -23,9 +23,9 @@ export function BottomNavigation({
     <HStack style={styles.navigationContainer}>
       <Pressable
         style={styles.navButton}
-        onPress={() => navigation.navigate("friends")}
+        onPress={() => navigation.navigate("analytics")}
       >
-        <Ionicons name="people" size={24} color="#FFF" />
+        <Ionicons name="bar-chart" size={24} color="#FFF" />
       </Pressable>
 
       <Pressable

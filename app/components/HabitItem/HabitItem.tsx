@@ -17,12 +17,12 @@ interface HabitItemProps {
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-export function HabitItem({ 
-  habit, 
-  onPress, 
-  onEdit, 
+export function HabitItem({
+  habit,
+  onPress,
+  onEdit,
   onToggleCompletion,
-  selectedDay 
+  selectedDay,
 }: HabitItemProps) {
   const shouldShowHabit = habit.frequency.includes(selectedDay as WeekDay);
 
@@ -34,10 +34,13 @@ export function HabitItem({
     onToggleCompletion();
   }, [onToggleCompletion]);
 
-  const handleEdit = React.useCallback((e: any) => {
-    e.stopPropagation();
-    onEdit();
-  }, [onEdit]);
+  const handleEdit = React.useCallback(
+    (e: any) => {
+      e.stopPropagation();
+      onEdit();
+    },
+    [onEdit]
+  );
 
   return (
     <Pressable
@@ -56,13 +59,15 @@ export function HabitItem({
                 key={day}
                 style={[
                   styles.dayCircle,
-                  habit.frequency.includes(index as WeekDay) && styles.dayCircleSelected
+                  habit.frequency.includes(index as WeekDay) &&
+                    styles.dayCircleSelected,
                 ]}
               >
                 <Text
                   style={[
                     styles.dayText,
-                    habit.frequency.includes(index as WeekDay) && styles.dayTextSelected
+                    habit.frequency.includes(index as WeekDay) &&
+                      styles.dayTextSelected,
                   ]}
                 >
                   {day}
@@ -71,11 +76,12 @@ export function HabitItem({
             ))}
           </HStack>
         </VStack>
-        <Pressable
-          onPress={handleEdit}
-          style={styles.editButton}
-        >
-          <Text style={styles.editButtonText}>⋮</Text>
+        <Pressable onPress={handleEdit} style={styles.editButton} hitSlop={8}>
+          <Ionicons
+            name="ellipsis-vertical"
+            size={20}
+            color={colors.text.secondary}
+          />
         </Pressable>
       </HStack>
     </Pressable>
@@ -111,7 +117,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface.light,
   },
   checkmark: {
-    color: "#8B5CF6",
+    color: colors.primary[500],
     fontSize: 16,
     fontWeight: "bold",
   },
@@ -137,15 +143,9 @@ const styles = StyleSheet.create({
   editButton: {
     width: 32,
     height: 32,
+    alignItems: "center",
+    justifyContent: "center",
     borderRadius: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  editButtonText: {
-    color: colors.text.primary,
-    fontSize: 20,
-    lineHeight: 24,
   },
   daysContainer: {
     marginTop: 8,
@@ -155,8 +155,8 @@ const styles = StyleSheet.create({
     width: 32,
     height: 24,
     borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: colors.surface.medium,
     borderWidth: 1,
     borderColor: colors.border.light,
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
   },
   dayText: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: "500",
     color: colors.text.secondary,
   },
   dayTextSelected: {

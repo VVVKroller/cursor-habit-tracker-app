@@ -12,6 +12,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "./utils/colors";
 import { BottomNavigation } from "./components/Navigation/BottomNavigation";
+import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type SettingsSectionProps = {
   title: string;
@@ -73,9 +75,22 @@ const SettingsItem = ({
 );
 
 export default function SettingsScreen() {
+  const navigation = useNavigation();
   const [notifications, setNotifications] = React.useState(true);
   const [darkMode, setDarkMode] = React.useState(false);
   const [healthSync, setHealthSync] = React.useState(true);
+
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem("user");
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Auth" }],
+      });
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
 
   return (
     <LinearGradient
@@ -178,10 +193,7 @@ export default function SettingsScreen() {
             />
           </SettingsSection>
 
-          <Pressable
-            style={styles.logoutButton}
-            onPress={() => console.log("Logout")}
-          >
+          <Pressable style={styles.logoutButton} onPress={handleLogout}>
             <Text style={styles.logoutText}>Log Out</Text>
           </Pressable>
         </ScrollView>

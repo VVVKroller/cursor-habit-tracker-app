@@ -1,5 +1,5 @@
 import React from "react";
-import { Text, Pressable, StyleSheet, ScrollView } from "react-native";
+import { Text, Pressable, StyleSheet, ScrollView, View } from "react-native";
 import { Box } from "@/components/ui/box";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeIn } from "react-native-reanimated";
@@ -18,6 +18,32 @@ export function Calendar({
   onSelectDay,
   scrollRef,
 }: CalendarProps) {
+  const itemWidth = 64; // width of each day item
+
+  // Add useEffect for initial scroll
+  React.useEffect(() => {
+    // Find today's index
+    const today = new Date();
+    const todayIndex = allDates.findIndex(
+      (date) =>
+        date.fullDate.getDate() === today.getDate() &&
+        date.fullDate.getMonth() === today.getMonth() &&
+        date.fullDate.getFullYear() === today.getFullYear()
+    );
+
+    if (todayIndex !== -1 && scrollRef.current) {
+      // Add small delay to ensure the scroll happens after layout
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({
+          x: todayIndex * itemWidth,
+          animated: true,
+        });
+        // Optionally select today's date
+        onSelectDay(todayIndex);
+      }, 100);
+    }
+  }, []); // Empty dependency array means this runs once on mount
+
   const isToday = (date: Date) => {
     const today = new Date();
     return (
@@ -29,7 +55,7 @@ export function Calendar({
 
   return (
     <Box style={styles.calendarContainer}>
-      <LinearGradient
+        <LinearGradient   
         colors={[colors.surface.light, "rgba(255, 255, 255, 0.03)"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -156,14 +182,14 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   todayText: {
-    color: "#8B5CF6",
+    color: colors.status.warning,
     fontWeight: "800",
   },
   todayDot: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: "#8B5CF6",
+    backgroundColor: colors.status.warning,
     marginTop: 4,
   },
 });

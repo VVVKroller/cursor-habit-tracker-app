@@ -10,11 +10,12 @@ import {
   Dimensions,
   Switch,
   Image,
+  Easing,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
-import { Habit, DayItem } from "@/app/types";
+import { Habit, DayItem, WeekDay } from "@/app/types";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   useSharedValue,
@@ -23,7 +24,11 @@ import Animated, {
   Extrapolate,
   useAnimatedScrollHandler,
   withSpring,
+  FadeIn,
   withTiming,
+  SlideOutUp,
+  SlideInDown,
+  FadeOut,
 } from "react-native-reanimated";
 import { VStack } from "@/components/ui/vstack";
 import { useNavigation } from "@react-navigation/native";
@@ -42,6 +47,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { BottomNavigation } from "./components/Navigation/BottomNavigation";
 import { StatusCircles } from "./components/StatusCircles/StatusCircles";
 import { MotiView } from "moti";
+import { useDatabase } from "./hooks/useDatabase";
+import { useAuth } from "./context/AuthContext";
+import { styles } from "./styles/HabitsList.styles";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CALENDAR_ITEM_WIDTH = SCREEN_WIDTH / 7;
@@ -90,63 +98,66 @@ const WaterTrackerModal = ({
   if (!visible) return null;
 
   return (
-    <View style={styles.modalOverlay}>
-      <MotiView
-        from={{
-          opacity: 0,
-        }}
-        animate={{
-          opacity: 1,
-        }}
-        transition={{
-          type: "timing",
-          duration: 200,
-        }}
-        style={styles.modalBackdrop}
-        onTouchEnd={onClose}
-      />
-      <MotiView
-        from={{
-          translateY: 100,
-          opacity: 0,
-        }}
-        animate={{
-          translateY: 0,
-          opacity: 1,
-        }}
-        transition={{
-          type: "spring",
-          damping: 20,
-          mass: 1.1,
-        }}
-        style={styles.waterTrackerModal}
+    <Modal
+      visible={visible}
+      transparent
+      statusBarTranslucent
+      animationType="none"
+      onRequestClose={onClose}
+    >
+      <Animated.View
+        entering={FadeIn.duration(200)}
+        exiting={FadeOut.duration(200)}
+        style={styles.overlay}
       >
-        <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>Water Tracker</Text>
-          <Pressable style={styles.modalCloseButton} onPress={onClose}>
-            <Ionicons name="close" size={24} color={colors.text.secondary} />
-          </Pressable>
-        </View>
-        <WaterTracker
-          waterIntake={waterIntake}
-          setWaterIntake={setWaterIntake}
-        />
-      </MotiView>
-    </View>
+        <Animated.View
+          entering={SlideInDown.duration(300).easing(
+            Easing.bezier(0.2, 0, 0, 1)
+          )}
+          exiting={SlideOutUp.duration(200).easing(Easing.bezier(0.4, 0, 1, 1))}
+          style={styles.modalContent}
+        >
+          <LinearGradient
+            colors={[colors.surface.light, colors.surface.medium]}
+            style={styles.gradient}
+          >
+            <View style={styles.handle} />
+
+            <View style={styles.header}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Water Tracker</Text>
+                <Pressable style={styles.modalCloseButton} onPress={onClose}>
+                  <Ionicons
+                    name="close"
+                    size={24}
+                    color={colors.text.secondary}
+                  />
+                </Pressable>
+              </View>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <WaterTracker
+                waterIntake={waterIntake}
+                setWaterIntake={setWaterIntake}
+              />
+            </View>
+          </LinearGradient>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
   );
 };
 
 // Обновим тип для setHabits
 type SetHabitsType = React.Dispatch<React.SetStateAction<Habit[]>>;
 
-export default function HabitsList({
-  habits,
-  setHabits,
-}: {
-  habits: Habit[];
-  setHabits: SetHabitsType;
-}) {
-  // Add navigation hook
+export default function HabitsList() {
+  const { user } = useAuth();
+  const { habits, loading, error, completeHabit, skipHabit } = useDatabase(
+    user?.uid || null
+  );
+
   const navigation = useNavigation<NavigationProp>();
   const allDates = generateDatesRange();
   const now = new Date();
@@ -238,34 +249,32 @@ export default function HabitsList({
 
   function saveEdit() {
     if (!editingHabit) return;
-    setHabits((prevHabits) =>
-      prevHabits.map((h) =>
-        h.id === editingHabit.id ? { ...h, name: editingName } : h
-      )
-    );
-    closeEditModal();
+    // This function needs to be updated to use the database
   }
 
   function handleWaterIntake() {
     setWaterIntake((prev) => (prev < 8 ? prev + 1 : prev));
   }
 
-  // Обновим функцию toggleHabitCompletion
-  function toggleHabitCompletion(habitId: string) {
-    setHabits((prevHabits: Habit[]) => {
-      // Создаем новый массив
-      const newHabits = [...prevHabits];
-      // Находим нужную привычку
-      const habitIndex = newHabits.findIndex((h) => h.id === habitId);
-      if (habitIndex !== -1) {
-        // Обновляем только одну привычку
-        newHabits[habitIndex] = {
-          ...newHabits[habitIndex],
-          isCompleted: !newHabits[habitIndex].isCompleted,
-        };
+  async function toggleHabitCompletion(habitId: string) {
+    const selectedDate = allDates[selectedDayIndex].fullDate;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    selectedDate.setHours(0, 0, 0, 0);
+
+    if (selectedDate.getTime() === today.getTime()) {
+      // For today's habits, toggle completion
+      const success = await completeHabit(habitId);
+      if (success) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-      return newHabits;
-    });
+    } else if (selectedDate < today) {
+      // For past habits, mark as skipped
+      const success = await skipHabit(habitId, selectedDate);
+      if (success) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      }
+    }
   }
 
   // Add state for menu
@@ -302,6 +311,22 @@ export default function HabitsList({
     // Преобразуем из Sunday = 0 в Monday = 0
     return ((day + 6) % 7) as WeekDay;
   };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Loading habits...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    );
+  }
 
   if (filteredHabits.length === 0) {
     return (
@@ -345,10 +370,10 @@ export default function HabitsList({
             <View style={[styles.emptyContainer, { zIndex: 0 }]}>
               <VStack style={styles.emptyContent}>
                 <View style={styles.emptyIconContainer}>
-                  <Ionicons 
-                    name="add-circle-outline" 
-                    size={64} 
-                    color={colors.text.primary} 
+                  <Ionicons
+                    name="add-circle-outline"
+                    size={64}
+                    color={colors.text.primary}
                   />
                 </View>
                 <Text style={styles.emptyTitle}>No habits yet</Text>
@@ -474,328 +499,3 @@ export default function HabitsList({
     </LinearGradient>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    paddingTop: 8,
-  },
-  calendarContainer: {
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-    paddingVertical: 15,
-    marginBottom: 10,
-    borderRadius: 20,
-    marginHorizontal: 10,
-    backdropFilter: "blur(10px)",
-  },
-  calendarContent: {
-    alignItems: "center",
-  },
-  calendarItem: {
-    width: 65,
-    height: 75,
-    justifyContent: "center",
-    alignItems: "center",
-    marginHorizontal: 5,
-    borderRadius: 15,
-    backgroundColor: "rgba(255, 255, 255, 0.06)",
-  },
-  calendarItemSelected: {
-    backgroundColor: "#8B5CF6",
-    transform: [{ scale: 1.05 }],
-    shadowColor: "#8B5CF6",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  calendarDay: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    opacity: 0.7,
-  },
-  calendarDate: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  calendarDateSelected: {
-    color: "#FFFFFF",
-  },
-  toggleContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    marginHorizontal: 10,
-    marginVertical: 10,
-    borderRadius: 20,
-  },
-  toggleLabel: {
-    color: "#FFFFFF",
-    fontSize: 16,
-  },
-  toggleType: {
-    fontSize: 16,
-    color: "#FFFFFF",
-    marginLeft: 8,
-  },
-  habitsList: {
-    flex: 1,
-    marginBottom: 180,
-  },
-  habitsListContent: {
-    paddingHorizontal: 10,
-  },
-  habitItem: {
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-    borderRadius: 15,
-    marginBottom: 12,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  habitItemContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderRadius: 15,
-    padding: 15,
-    justifyContent: "space-between",
-  },
-  editButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-  },
-  habitIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 15,
-  },
-  habitIcon: {
-    fontSize: 24,
-  },
-  habitName: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  modalContent: {
-    width: "90%",
-    maxWidth: 400,
-    backgroundColor: "rgba(30, 27, 75, 0.95)",
-    borderRadius: 20,
-    padding: 20,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 10,
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginBottom: 16,
-  },
-  modalDays: {
-    fontSize: 16,
-    color: "rgba(255, 255, 255, 0.7)",
-    marginBottom: 12,
-  },
-  modalDescription: {
-    fontSize: 16,
-    color: "rgba(255, 255, 255, 0.9)",
-    textAlign: "center",
-    marginBottom: 24,
-    lineHeight: 24,
-  },
-  closeButton: {
-    backgroundColor: "#EF4444",
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  buttonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.8)",
-  },
-  waterTrackerModal: {
-    backgroundColor: colors.surface.strong,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    padding: 24,
-    paddingBottom: 40,
-    borderWidth: 1,
-    borderColor: colors.border.medium,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 24,
-    elevation: 24,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  modalCloseButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.surface.medium,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: colors.border.light,
-  },
-  bigAvatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: "#E2E8F0",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 16,
-  },
-  navigationContainer: {
-    height: 80,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-    paddingBottom: 20,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    backdropFilter: "blur(10px)",
-    zIndex: 2,
-  },
-  navButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: "#8B5CF6",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#8B5CF6",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-    marginTop: 20,
-  },
-  saveButton: {
-    backgroundColor: "#8B5CF6",
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    flex: 1,
-    marginRight: 10,
-  },
-  cancelButton: {
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    flex: 1,
-    marginLeft: 10,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginBottom: 4,
-  },
-  headerLeft: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: colors.text.primary,
-  },
-  habitsContainer: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  habitsContainerContent: {
-    paddingBottom: 100,
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    marginTop: -40, // Компенсируем отступ, чтобы центрировать контент
-  },
-  emptyContent: {
-    alignItems: 'center',
-    gap: 16,
-  },
-  emptyIconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: colors.surface.medium,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.border.medium,
-    marginBottom: 8,
-  },
-  emptyTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: colors.text.primary,
-    textAlign: 'center',
-  },
-  emptyText: {
-    fontSize: 16,
-    color: colors.text.secondary,
-    textAlign: 'center',
-    lineHeight: 24,
-    maxWidth: 280,
-  },
-});

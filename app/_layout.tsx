@@ -1,20 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import "@/global.css";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { Stack } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-
-import LoginScreen from "./LoginScreen";
-import RegisterScreen from "./RegisterScreen";
-import HabitsList from "./HabitsList";
-import AddHabit from "./AddHabit";
-import SettingsScreen from "./SettingsScreen";
-import FriendsScreen from "./screens/FriendsScreen";
-import { Habit } from "./types";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { AuthProvider } from "./context/AuthContext";
+import { useAuth } from "./context/AuthContext";
 import * as Notifications from "expo-notifications";
-
-const Stack = createNativeStackNavigator();
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -24,90 +15,77 @@ Notifications.setNotificationHandler({
   }),
 });
 
-export default function RootLayout() {
-  const [habits, setHabits] = useState<Habit[]>([]);
-  useEffect(() => {
-    setTimeout(() => {
-      Notifications.scheduleNotificationAsync({
-        content: {
-          title: "Look at that notification",
-          body: "I'm so proud of myself!",
-        },
-        trigger: null,
-      });
-    }, /*15000 */);
-    const fetchHabits = async () => {
-      const habits = await AsyncStorage.getItem("habits");
-      if (habits) {
-        setHabits(JSON.parse(habits));
-      }
-    };
-    fetchHabits();
-  }, []);
+function RootLayoutNav() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return null; // Or a loading screen
+  }
+
   return (
-    <SafeAreaProvider>
-      <GluestackUIProvider mode="light">
-        <Stack.Navigator
-          initialRouteName="Home"
-          screenOptions={{
-            animation: "none",
-            headerShown: false,
-          }}
-        >
-          {/* Экран входа */}
+    <Stack screenOptions={{ headerShown: false }}>
+      {!user ? (
+        // Auth screens
+        <>
           <Stack.Screen
             name="Login"
-            component={LoginScreen}
-            options={{ title: "Вход" }}
-          />
-          {/* Экран регистрации */}
-          <Stack.Screen
-            name="Register"
-            component={RegisterScreen}
-            options={{ title: "Регистрация" }}
-          />
-          {/* Главный экран с привычками */}
-          <Stack.Screen
-            name="Home"
-            component={() => (
-              <HabitsList habits={habits} setHabits={setHabits} />
-            )}
             options={{
-              headerShown: false,
-              animation: "none",
+              title: "Вход",
+              headerShown: true,
             }}
           />
-          {/* Экран добавления новой привычки */}
+          <Stack.Screen
+            name="Register"
+            options={{
+              title: "Регистрация",
+              headerShown: true,
+            }}
+          />
+        </>
+      ) : (
+        // App screens
+        <>
+          <Stack.Screen
+            name="Home"
+            options={{
+              title: "Главная",
+              headerShown: true,
+            }}
+          />
           <Stack.Screen
             name="AddHabit"
-            component={() => (
-              <AddHabit
-                addHabit={(habit: Habit) => {
-                  const newHabits = [...habits, habit];
-                  AsyncStorage.setItem("habits", JSON.stringify(newHabits));
-                  setHabits(newHabits);
-                }}
-              />
-            )}
-            options={{ title: "Добавить привычку" }}
+            options={{
+              title: "Добавить привычку",
+              headerShown: true,
+            }}
           />
           <Stack.Screen
             name="settings"
-            component={SettingsScreen}
             options={{
-              headerShown: false,
-              animation: "none",
+              title: "Настройки",
+              headerShown: true,
             }}
           />
           <Stack.Screen
-            name="friends"
-            component={FriendsScreen}
+            name="analytics"
             options={{
-              headerShown: false,
-              animation: "none",
+              title: "Аналитика",
+              headerShown: true,
             }}
           />
-        </Stack.Navigator>
+        </>
+      )}
+    </Stack>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <SafeAreaProvider>
+      <GluestackUIProvider>
+        <AuthProvider>
+          <RootLayoutNav />
+        </AuthProvider>
       </GluestackUIProvider>
     </SafeAreaProvider>
   );

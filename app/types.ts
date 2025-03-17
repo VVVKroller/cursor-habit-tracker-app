@@ -3,12 +3,15 @@ export type WeekDay = 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0 - Monday, 6 - Sunday
 export interface Habit {
   id: string;
   name: string;
-  description?: string;
   type: "good" | "bad";
-  daysCompleted: number;
-  frequency: WeekDay[]; // Изменяем тип с "daily" на массив дней недели
-  isCompleted: boolean;
-  goal: number;
+  frequency: WeekDay[];
+  icon: string;
+  color: string;
+  isCompleted?: boolean;
+  streak?: number;
+  totalCompletions?: number;
+  totalSkips?: number;
+  lastCompleted?: Date;
 }
 
 export interface DayItem {
@@ -16,11 +19,15 @@ export interface DayItem {
   label: string;
 }
 
-type RootStackParamList = {
-  settings: undefined;
+export type RootStackParamList = {
+  Login: undefined;
+  Register: undefined;
   Home: undefined;
   AddHabit: {
     type: "good" | "bad";
   };
-  friends: undefined;
+  settings: undefined;
+  analytics: undefined;
 };
+
+export type SetHabitsType = React.Dispatch<React.SetStateAction<Habit[]>>;

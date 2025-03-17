@@ -77,7 +77,7 @@ export function HabitEditModal({
           style={styles.modalContent}
         >
           <LinearGradient
-            colors={["rgba(30, 27, 75, 0.98)", "rgba(30, 27, 75, 0.95)"]}
+            colors={[colors.surface.light, colors.surface.medium]}
             style={styles.gradient}
           >
             <View style={styles.handle} />
