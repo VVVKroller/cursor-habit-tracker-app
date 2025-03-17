@@ -1,11 +1,22 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import "@/global.css";
 import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
-import { Stack } from "expo-router";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { AuthProvider } from "./context/AuthContext";
-import { useAuth } from "./context/AuthContext";
+import { AuthScreen } from "./screens/AuthScreen";
+
+import LoginScreen from "./screens/LoginScreen";
+import { RegisterScreen } from "./screens/RegisterScreen";
+import HabitsList from "./HabitsList";
+import AddHabit from "./AddHabit";
+import SettingsScreen from "./SettingsScreen";
+import FriendsScreen from "./screens/FriendsScreen";
+import AnalyticsScreen from "./screens/AnalyticsScreen";
+import { Habit } from "./types";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
+
+const Stack = createNativeStackNavigator();
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -15,77 +26,110 @@ Notifications.setNotificationHandler({
   }),
 });
 
-function RootLayoutNav() {
-  const { user, loading } = useAuth();
+export default function RootLayout() {
+  const [habits, setHabits] = useState<Habit[]>([]);
+  const [waterIntake, setWaterIntake] = useState(0);
+  const [steps, setSteps] = useState(0);
 
-  if (loading) {
-    return null; // Or a loading screen
-  }
+  useEffect(() => {
+    setTimeout(() => {
+      Notifications.scheduleNotificationAsync({
+        content: {
+          title: "Look at that notification",
+          body: "I'm so proud of myself!",
+        },
+        trigger: null,
+      });
+    });
+
+    const fetchHabits = async () => {
+      const habits = await AsyncStorage.getItem("habits");
+      if (habits) {
+        setHabits(JSON.parse(habits));
+      }
+    };
+    fetchHabits();
+  }, []);
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      {!user ? (
-        // Auth screens
-        <>
+    <SafeAreaProvider>
+      <GluestackUIProvider mode="light">
+        <Stack.Navigator
+          initialRouteName="Auth"
+          screenOptions={{
+            animation: "none",
+            headerShown: false,
+          }}
+        >
+          <Stack.Screen
+            name="Auth"
+            component={AuthScreen}
+            options={{ headerShown: false }}
+          />
           <Stack.Screen
             name="Login"
-            options={{
-              title: "Вход",
-              headerShown: true,
-            }}
+            component={LoginScreen}
+            options={{ headerShown: false }}
           />
           <Stack.Screen
             name="Register"
-            options={{
-              title: "Регистрация",
-              headerShown: true,
-            }}
+            component={RegisterScreen}
+            options={{ headerShown: false }}
           />
-        </>
-      ) : (
-        // App screens
-        <>
           <Stack.Screen
             name="Home"
+            component={() => (
+              <HabitsList habits={habits} setHabits={setHabits} />
+            )}
             options={{
-              title: "Главная",
-              headerShown: true,
+              headerShown: false,
+              animation: "none",
             }}
           />
           <Stack.Screen
             name="AddHabit"
-            options={{
-              title: "Добавить привычку",
-              headerShown: true,
-            }}
+            component={() => (
+              <AddHabit
+                addHabit={(habit: Habit) => {
+                  const newHabits = [...habits, habit];
+                  AsyncStorage.setItem("habits", JSON.stringify(newHabits));
+                  setHabits(newHabits);
+                }}
+              />
+            )}
+            options={{ title: "Добавить привычку" }}
           />
           <Stack.Screen
             name="settings"
+            component={SettingsScreen}
             options={{
-              title: "Настройки",
-              headerShown: true,
+              headerShown: false,
+              animation: "none",
+            }}
+          />
+          <Stack.Screen
+            name="friends"
+            component={FriendsScreen}
+            options={{
+              headerShown: false,
+              animation: "none",
             }}
           />
           <Stack.Screen
             name="analytics"
+            component={() => (
+              <AnalyticsScreen
+                habits={habits}
+                waterIntake={waterIntake}
+                steps={steps}
+              />
+            )}
             options={{
-              title: "Аналитика",
-              headerShown: true,
+              headerShown: false,
+              animation: "none",
             }}
           />
-        </>
-      )}
-    </Stack>
-  );
-}
-
-export default function RootLayout() {
-  return (
-    <SafeAreaProvider>
-      <GluestackUIProvider>
-        <AuthProvider>
-          <RootLayoutNav />
-        </AuthProvider>
+        </Stack.Navigator>
       </GluestackUIProvider>
     </SafeAreaProvider>
   );

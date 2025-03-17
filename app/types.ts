@@ -1,17 +1,16 @@
 export type WeekDay = 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0 - Monday, 6 - Sunday
 
 export interface Habit {
-  id: string;
+  id: string | number;
   name: string;
+  description?: string;
   type: "good" | "bad";
   frequency: WeekDay[];
-  icon: string;
-  color: string;
-  isCompleted?: boolean;
-  streak?: number;
-  totalCompletions?: number;
-  totalSkips?: number;
-  lastCompleted?: Date;
+  isCompleted: boolean;
+  daysCompleted: number;
+  completionHistory: {
+    [date: string]: boolean; // Format: "YYYY-MM-DD"
+  };
 }
 
 export interface DayItem {

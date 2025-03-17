@@ -8,15 +8,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../utils/colors";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import { firebase } from "../../firebase";
-import { createUserDocument } from "../services/firestore";
 
 export function RegisterScreen() {
   const navigation = useNavigation();
@@ -24,54 +21,6 @@ export function RegisterScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleRegister = async () => {
-    if (!name || !email || !password) {
-      Alert.alert("Error", "Please fill in all fields");
-      return;
-    }
-
-    if (password.length < 6) {
-      Alert.alert("Error", "Password must be at least 6 characters long");
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      // Create user in Firebase Auth
-      const userCredential = await firebase
-        .auth()
-        .createUserWithEmailAndPassword(email, password);
-      const user = userCredential.user;
-
-      if (user) {
-        // Create user document in Firestore
-        const success = await createUserDocument(user.uid, {
-          email,
-          name,
-        });
-
-        if (success) {
-          // Navigate to main app
-          navigation.reset({
-            index: 0,
-            routes: [{ name: "Root" }],
-          });
-        } else {
-          throw new Error("Failed to create user document");
-        }
-      }
-    } catch (error: any) {
-      Alert.alert(
-        "Registration Error",
-        error.message || "Failed to create account. Please try again."
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <LinearGradient
@@ -125,7 +74,6 @@ export function RegisterScreen() {
                       placeholderTextColor={colors.text.secondary}
                       value={name}
                       onChangeText={setName}
-                      editable={!isLoading}
                     />
                   </View>
                 </View>
@@ -147,7 +95,6 @@ export function RegisterScreen() {
                       autoCapitalize="none"
                       value={email}
                       onChangeText={setEmail}
-                      editable={!isLoading}
                     />
                   </View>
                 </View>
@@ -168,7 +115,6 @@ export function RegisterScreen() {
                       secureTextEntry={!showPassword}
                       value={password}
                       onChangeText={setPassword}
-                      editable={!isLoading}
                     />
                     <Pressable
                       onPress={() => setShowPassword(!showPassword)}
@@ -186,23 +132,8 @@ export function RegisterScreen() {
 
               {/* Register Button */}
               <View style={styles.footer}>
-                <Pressable
-                  style={[
-                    styles.registerButton,
-                    isLoading && styles.registerButtonDisabled,
-                  ]}
-                  onPress={handleRegister}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <Text style={styles.registerButtonText}>
-                      Creating Account...
-                    </Text>
-                  ) : (
-                    <Text style={styles.registerButtonText}>
-                      Create Account
-                    </Text>
-                  )}
+                <Pressable style={styles.registerButton}>
+                  <Text style={styles.registerButtonText}>Create Account</Text>
                 </Pressable>
 
                 <Pressable
@@ -323,8 +254,5 @@ const styles = StyleSheet.create({
   loginLinkTextBold: {
     color: colors.primary[500],
     fontWeight: "600",
-  },
-  registerButtonDisabled: {
-    opacity: 0.7,
   },
 });
