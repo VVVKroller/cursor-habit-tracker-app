@@ -66,12 +66,9 @@ export function HabitsToggle({ showGoodHabits, onToggle }: HabitsToggleProps) {
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 20,
     marginBottom: 20,
-    marginTop: 8,
     borderRadius: 20,
     backgroundColor: colors.surface.light,
-    padding: 4,
     borderWidth: 1,
     borderColor: colors.border.light,
     shadowColor: "#000",
@@ -81,6 +78,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   toggleContainer: {
+    marginHorizontal: 10,
     flexDirection: "row",
     justifyContent: "space-between",
     gap: 4,

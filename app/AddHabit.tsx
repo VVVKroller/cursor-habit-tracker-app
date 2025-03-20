@@ -13,10 +13,11 @@ import { VStack } from "@/components/ui/vstack";
 import { HStack } from "@/components/ui/hstack";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Habit } from "./types";
+import { Habit, WeekDay } from "./types";
 import { colors } from "./utils/colors";
 import { RouteProp } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { createHabit } from "./utils/firebase";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const AVATARS = ["🏃‍♂️", "💪", "🧘‍♀️", "📚", "💧", "🥗", "😴", "🎯"];
@@ -54,13 +55,14 @@ export default function AddHabit({
     );
   };
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (selectedDays.length === 0) {
+      alert('You haven\'t selected days!')
       // Можно добавить Alert с предупреждением
       return;
     }
 
-    addHabit({
+    const habit: Habit = {
       id: crypto.randomUUID(),
       name: name,
       daysCompleted: 0,
@@ -68,8 +70,10 @@ export default function AddHabit({
       type: type,
       frequency: selectedDays as WeekDay[],
       isCompleted: false,
-      goal: parseInt(goal),
-    });
+      goal: goal ? parseInt(goal) : -1,
+    };
+    addHabit(habit);
+    await createHabit(habit);
     navigation.navigate("Home");
   };
 

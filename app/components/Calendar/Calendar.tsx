@@ -55,7 +55,7 @@ export function Calendar({
 
   return (
     <Box style={styles.calendarContainer}>
-        <LinearGradient   
+        <LinearGradient
         colors={[colors.surface.light, "rgba(255, 255, 255, 0.03)"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     backdropFilter: "blur(10px)",
   },
   gradient: {
-    paddingVertical: 16,
+    paddingVertical: 8,
   },
   calendarContent: {
     paddingHorizontal: 12,
@@ -132,7 +132,6 @@ const styles = StyleSheet.create({
   },
   calendarItem: {
     borderRadius: 16,
-    marginHorizontal: 4,
   },
   calendarInner: {
     width: 54,
@@ -147,7 +146,6 @@ const styles = StyleSheet.create({
   calendarInnerSelected: {
     backgroundColor: colors.primary[500],
     borderColor: colors.primary[400],
-    transform: [{ scale: 1.05 }],
     shadowColor: colors.primary[500],
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,

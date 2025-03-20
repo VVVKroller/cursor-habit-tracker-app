@@ -1,15 +1,26 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, Pressable, Dimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../utils/colors";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-
-const { width } = Dimensions.get("window");
+import { getAuthorizedUser, signInWithGoogle } from "../utils/firebase";
+import { User } from "firebase/auth";
 
 export function AuthScreen() {
   const navigation = useNavigation();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    getAuthorizedUser((u) => {
+      setUser(u);
+    });
+  }, []);
+
+  if (user) {
+    navigation.navigate("Home");
+  }
 
   return (
     <LinearGradient
@@ -40,8 +51,9 @@ export function AuthScreen() {
           <View style={styles.authButtons}>
             <Pressable
               style={styles.googleButton}
-              onPress={() => {
-                /* Google login */
+              onPress={async () => {
+                const user = await signInWithGoogle();
+                setUser(user);
               }}
             >
               <View style={styles.googleIconContainer}>
@@ -106,7 +118,8 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    marginTop: 60,
+    justifyContent: 'center',
+    flex: 1,
   },
   logoContainer: {
     width: 100,
@@ -135,12 +148,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text.secondary,
     textAlign: "center",
-    maxWidth: width * 0.8,
     lineHeight: 24,
   },
   authButtons: {
-    gap: 16,
-    marginBottom: 40,
+    gap: 10,
   },
   googleButton: {
     flexDirection: "row",

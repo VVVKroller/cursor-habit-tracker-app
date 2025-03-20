@@ -518,7 +518,6 @@ const styles = StyleSheet.create({
   },
   calendarItemSelected: {
     backgroundColor: "#8B5CF6",
-    transform: [{ scale: 1.05 }],
     shadowColor: "#8B5CF6",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -778,7 +777,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 24,
-    marginTop: -40, // Компенсируем отступ, чтобы центрировать контент
   },
   emptyContent: {
     alignItems: "center",

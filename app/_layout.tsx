@@ -32,15 +32,15 @@ export default function RootLayout() {
   const [steps, setSteps] = useState(0);
 
   useEffect(() => {
-    setTimeout(() => {
-      Notifications.scheduleNotificationAsync({
-        content: {
-          title: "Look at that notification",
-          body: "I'm so proud of myself!",
-        },
-        trigger: null,
-      });
-    });
+    // setTimeout(() => {
+    //   Notifications.scheduleNotificationAsync({
+    //     content: {
+    //       title: "Look at that notification",
+    //       body: "I'm so proud of myself!",
+    //     },
+    //     trigger: null,
+    //   });
+    // });
 
     const fetchHabits = async () => {
       const habits = await AsyncStorage.getItem("habits");
