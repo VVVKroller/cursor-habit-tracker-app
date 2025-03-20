@@ -9,9 +9,7 @@ export interface Habit {
   frequency: WeekDay[];
   isCompleted: boolean;
   daysCompleted: number;
-  completionHistory?: {
-    [date: string]: boolean; // Format: "YYYY-MM-DD"
-  };
+  completionHistory: string[]; // Format: "YYYY-MM-DD"
   goal?: number;
 }
 

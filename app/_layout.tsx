@@ -30,6 +30,11 @@ export default function RootLayout() {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [waterIntake, setWaterIntake] = useState(0);
   const [steps, setSteps] = useState(0);
+  const updateHabits = (habits: Habit[]) => {
+//TODO Update in DB
+    setHabits(habits);
+    AsyncStorage.setItem("habits", JSON.stringify(habits));
+  };
 
   useEffect(() => {
     // setTimeout(() => {
@@ -79,7 +84,7 @@ export default function RootLayout() {
           <Stack.Screen
             name="Home"
             component={() => (
-              <HabitsList habits={habits} setHabits={setHabits} />
+              <HabitsList habits={habits} setHabits={updateHabits} />
             )}
             options={{
               headerShown: false,
@@ -92,8 +97,7 @@ export default function RootLayout() {
               <AddHabit
                 addHabit={(habit: Habit) => {
                   const newHabits = [...habits, habit];
-                  AsyncStorage.setItem("habits", JSON.stringify(newHabits));
-                  setHabits(newHabits);
+                  updateHabits(newHabits);
                 }}
               />
             )}

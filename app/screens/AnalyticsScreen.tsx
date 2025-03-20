@@ -41,14 +41,11 @@ export default function AnalyticsScreen({
         // Check if habit is scheduled for this day of week
         const isScheduledToday = habit.frequency.includes(dayOfWeek);
 
-        // Get completion status for this date
-        const isCompletedToday = habit.completionHistory?.[dateString] ?? false;
-
         return isScheduledToday;
       })
       .map((habit) => ({
         ...habit,
-        isCompleted: habit.completionHistory?.[dateString] ?? false,
+        isCompleted: habit.completionHistory?.includes(dateString) ?? false,
       }));
   }, [habits, selectedDate]);
 

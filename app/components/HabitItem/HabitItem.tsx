@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Habit } from "@/app/types";
 import { colors } from "../../utils/colors";
 import { WeekDay } from "@/app/types";
+import { formatDateToYYYYMMDD } from "@/app/utils/dateUtils";
 
 interface HabitItemProps {
   habit: Habit;
@@ -13,6 +14,7 @@ interface HabitItemProps {
   onEdit: () => void;
   onToggleCompletion: () => void;
   selectedDay: number;
+  selectedDate: Date;
 }
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -23,6 +25,7 @@ export function HabitItem({
   onEdit,
   onToggleCompletion,
   selectedDay,
+  selectedDate,
 }: HabitItemProps) {
   const shouldShowHabit = habit.frequency.includes(selectedDay as WeekDay);
 
@@ -42,14 +45,18 @@ export function HabitItem({
     [onEdit]
   );
 
+  const isCompleted = habit.completionHistory?.includes(
+    formatDateToYYYYMMDD(selectedDate)
+  );
+
   return (
     <Pressable
       onPress={handleToggle}
-      style={[styles.habitItem, habit.isCompleted && styles.habitItemCompleted]}
+      style={[styles.habitItem, isCompleted && styles.habitItemCompleted]}
     >
       <HStack style={styles.habitContent}>
         <Pressable style={styles.checkbox} onPress={handleToggle}>
-          {habit.isCompleted && <Text style={styles.checkmark}>✓</Text>}
+          {isCompleted && <Text style={styles.checkmark}>✓</Text>}
         </Pressable>
         <VStack style={styles.habitInfo}>
           <Text style={styles.habitName}>{habit.name}</Text>

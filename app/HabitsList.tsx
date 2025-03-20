@@ -15,7 +15,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@/components/ui/hstack";
-import { Habit, DayItem } from "@/app/types";
+import { Habit, DayItem, SetHabitsType, WeekDay } from "@/app/types";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   useSharedValue,
@@ -37,7 +37,7 @@ import * as Haptics from "expo-haptics";
 import { Calendar } from "./components/Calendar/Calendar";
 import { WaterTracker } from "./components/WaterTracker/WaterTracker";
 import { HabitItem } from "./components/HabitItem/HabitItem";
-import { generateDatesRange } from "./utils/dateUtils";
+import { generateDatesRange, formatDateToYYYYMMDD } from "./utils/dateUtils";
 import { habitsData } from "./data/habits";
 import { HabitsToggle } from "./components/HabitsToggle/HabitsToggle";
 import { colors } from "./utils/colors";
@@ -146,15 +146,12 @@ const WaterTrackerModal = ({
   );
 };
 
-// Обновим тип для setHabits
-type SetHabitsType = React.Dispatch<React.SetStateAction<Habit[]>>;
-
 export default function HabitsList({
   habits,
   setHabits,
 }: {
   habits: Habit[];
-  setHabits: SetHabitsType;
+  setHabits: (habits: Habit[]) => void;
 }) {
   // Add navigation hook
   const navigation = useNavigation<NavigationProp>();
@@ -175,6 +172,7 @@ export default function HabitsList({
   const [showGoodHabits, setShowGoodHabits] = useState<boolean>(true);
   const [waterIntake, setWaterIntake] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
+  const selectedDay = allDates[selectedDayIndex];
 
   const scrollY = useSharedValue(0);
   const listScale = useSharedValue(0.8);
@@ -248,8 +246,8 @@ export default function HabitsList({
 
   function saveEdit() {
     if (!editingHabit) return;
-    setHabits((prevHabits) =>
-      prevHabits.map((h) =>
+    setHabits(
+      habits.map((h) =>
         h.id === editingHabit.id ? { ...h, name: editingName } : h
       )
     );
@@ -262,20 +260,19 @@ export default function HabitsList({
 
   // Обновим функцию toggleHabitCompletion
   function toggleHabitCompletion(habitId: string) {
-    setHabits((prevHabits: Habit[]) => {
-      // Создаем новый массив
-      const newHabits = [...prevHabits];
-      // Находим нужную привычку
-      const habitIndex = newHabits.findIndex((h) => h.id === habitId);
-      if (habitIndex !== -1) {
-        // Обновляем только одну привычку
-        newHabits[habitIndex] = {
-          ...newHabits[habitIndex],
-          isCompleted: !newHabits[habitIndex].isCompleted,
-        };
-      }
-      return newHabits;
-    });
+    const formattedDate = formatDateToYYYYMMDD(selectedDay.fullDate);
+    setHabits(
+      habits.map((h) =>
+        h.id === habitId
+          ? {
+              ...h,
+              completionHistory: h.completionHistory?.includes(formattedDate)
+                ? h.completionHistory.filter((date) => date !== formattedDate)
+                : [...(h.completionHistory || []), formattedDate],
+            }
+          : h
+      )
+    );
   }
 
   // Add state for menu
@@ -445,7 +442,8 @@ export default function HabitsList({
                 onPress={() => toggleHabitCompletion(habit.id)}
                 onEdit={() => handleEditHabit(habit)}
                 onToggleCompletion={() => toggleHabitCompletion(habit.id)}
-                selectedDay={getWeekDay(allDates[selectedDayIndex].fullDate)}
+                selectedDay={getWeekDay(selectedDay.fullDate)}
+                selectedDate={selectedDay.fullDate}
               />
             ))}
           </Animated.ScrollView>
@@ -644,12 +642,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 24,
     lineHeight: 24,
-  },
-  closeButton: {
-    backgroundColor: "#EF4444",
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
   },
   buttonText: {
     color: "#FFFFFF",

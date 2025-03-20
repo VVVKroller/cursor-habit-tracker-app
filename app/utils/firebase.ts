@@ -8,13 +8,14 @@ import {
 import { Habit } from "../types";
 
 const firebaseConfig = {
-  apiKey: "",
-  authDomain: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: "",
-  databaseURL: ''
+  apiKey: "AIzaSyAPmYdB8X7GWOBh1GzHFAHKjBR-I1lsAKw",
+  authDomain: "habitflow-a94af.firebaseapp.com",
+  projectId: "habitflow-a94af",
+  storageBucket: "habitflow-a94af.firebasestorage.app",
+  messagingSenderId: "1088747143523",
+  appId: "1:1088747143523:web:8c55be98e9731b53901356",
+  measurementId: "G-TLGE5TCN6J",
+  databaseURL: "https://habitflow-a94af-default-rtdb.europe-west1.firebasedatabase.app/"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -57,3 +58,4 @@ export const createHabit = async (habit: Habit) => {
     console.error(error);
   }
 };
+//TODO Update in DB
