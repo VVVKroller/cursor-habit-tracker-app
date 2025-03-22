@@ -310,7 +310,30 @@ export default function HabitsList({
     return ((day + 6) % 7) as WeekDay;
   };
 
-  if (filteredHabits.length === 0) {
+  // Add this function before the return statement
+  const getHabitsForSelectedDayAndType = (
+    habits: Habit[],
+    selectedDate: Date,
+    showGoodHabits: boolean
+  ) => {
+    const weekDay = getWeekDay(selectedDate);
+    return habits.filter((habit) => {
+      const isCorrectType = showGoodHabits
+        ? habit.type === "good"
+        : habit.type === "bad";
+      const isScheduledForDay = habit.frequency.includes(weekDay);
+      return isCorrectType && isScheduledForDay;
+    });
+  };
+
+  // Update the empty state check in both return statements
+  const habitsForSelectedDay = getHabitsForSelectedDayAndType(
+    habits,
+    selectedDay.fullDate,
+    showGoodHabits
+  );
+
+  if (habitsForSelectedDay.length === 0) {
     return (
       <LinearGradient
         colors={[
@@ -351,16 +374,23 @@ export default function HabitsList({
             {/* Empty State */}
             <View style={[styles.emptyContainer, { zIndex: 0 }]}>
               <VStack style={styles.emptyContent}>
-                <View style={styles.emptyIconContainer}>
+                <Pressable
+                  style={styles.emptyIconContainer}
+                  onPress={() => setIsMenuOpen(true)}
+                >
                   <Ionicons
                     name="add-circle-outline"
                     size={64}
                     color={colors.text.primary}
                   />
-                </View>
-                <Text style={styles.emptyTitle}>No habits yet</Text>
+                </Pressable>
+                <Text style={styles.emptyTitle}>
+                  No {showGoodHabits ? "good" : "bad"} habits!
+                </Text>
                 <Text style={styles.emptyText}>
-                  Start building better habits by adding your first one
+                  {showGoodHabits
+                    ? "Add a good habit to start building positive routines"
+                    : "Add a bad habit to start breaking negative patterns"}
                 </Text>
               </VStack>
             </View>
@@ -435,7 +465,7 @@ export default function HabitsList({
             showsVerticalScrollIndicator={false}
             onScroll={scrollHandler}
           >
-            {filteredHabits.map((habit) => (
+            {habitsForSelectedDay.map((habit) => (
               <HabitItem
                 key={habit.id}
                 habit={habit}
