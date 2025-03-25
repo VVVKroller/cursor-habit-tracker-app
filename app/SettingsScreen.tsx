@@ -6,6 +6,7 @@ import {
   ScrollView,
   Switch,
   Pressable,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -14,6 +15,7 @@ import { colors } from "./utils/colors";
 import { BottomNavigation } from "./components/Navigation/BottomNavigation";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { user, signInWithGoogle } from "./utils/firebase";
 
 type SettingsSectionProps = {
   title: string;
@@ -92,6 +94,14 @@ export default function SettingsScreen() {
     }
   };
 
+  const handleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      console.error("Error signing in:", error);
+    }
+  };
+
   return (
     <LinearGradient
       colors={[
@@ -104,6 +114,51 @@ export default function SettingsScreen() {
       <SafeAreaView style={styles.safeArea}>
         <ScrollView style={styles.scrollView}>
           <Text style={styles.title}>Settings</Text>
+
+          {user ? (
+            <View style={styles.profileSection}>
+              <View style={styles.profileContent}>
+                <View style={styles.avatarContainer}>
+                  {user.photoURL ? (
+                    <Image
+                      source={{ uri: user.photoURL }}
+                      style={styles.avatar}
+                    />
+                  ) : (
+                    <View style={styles.avatarPlaceholder}>
+                      <Ionicons
+                        name="person"
+                        size={24}
+                        color={colors.text.primary}
+                      />
+                    </View>
+                  )}
+                </View>
+                <View style={styles.userInfo}>
+                  <Text style={styles.userName}>
+                    {user.displayName || "User"}
+                  </Text>
+                  <Text style={styles.userEmail}>{user.email}</Text>
+                </View>
+                <Pressable style={styles.logoutButton} onPress={handleLogout}>
+                  <Ionicons
+                    name="log-out-outline"
+                    size={24}
+                    color={colors.status.error}
+                  />
+                </Pressable>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.authSection}>
+              <Pressable style={styles.signInButton} onPress={handleSignIn}>
+                <View style={styles.googleIconContainer}>
+                  <Ionicons name="logo-google" size={20} color="#8AB4F8" />
+                </View>
+                <Text style={styles.signInText}>Sign in with Google</Text>
+              </Pressable>
+            </View>
+          )}
 
           <SettingsSection title="General">
             <SettingsItem
@@ -192,10 +247,6 @@ export default function SettingsScreen() {
               color={colors.text.secondary}
             />
           </SettingsSection>
-
-          <Pressable style={styles.logoutButton} onPress={handleLogout}>
-            <Text style={styles.logoutText}>Log Out</Text>
-          </Pressable>
         </ScrollView>
       </SafeAreaView>
       <BottomNavigation />
@@ -266,21 +317,77 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   logoutButton: {
-    marginHorizontal: 16,
-    marginVertical: 24,
-    backgroundColor: colors.status.error,
-    padding: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    shadowColor: colors.status.error,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    padding: 8,
   },
-  logoutText: {
-    color: colors.text.primary,
+  profileSection: {
+    backgroundColor: colors.surface.medium,
+    marginHorizontal: 16,
+    marginBottom: 24,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border.light,
+  },
+  profileContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+  },
+  avatarContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    overflow: "hidden",
+    marginRight: 12,
+  },
+  avatar: {
+    width: "100%",
+    height: "100%",
+  },
+  avatarPlaceholder: {
+    width: "100%",
+    height: "100%",
+    backgroundColor: colors.primary[500],
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userName: {
     fontSize: 16,
     fontWeight: "600",
+    color: colors.text.primary,
+    marginBottom: 2,
+  },
+  userEmail: {
+    fontSize: 14,
+    color: colors.text.secondary,
+  },
+  authSection: {
+    marginHorizontal: 16,
+    marginBottom: 24,
+  },
+  signInButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    padding: 12,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  googleIconContainer: {
+    marginRight: 12,
+  },
+  signInText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#E8EAED",
+    fontFamily: "System",
   },
 });

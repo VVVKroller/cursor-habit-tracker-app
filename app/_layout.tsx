@@ -138,7 +138,3 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
-
-//TODO Продумать приложение и разрисовать основные скрины. Красиво делать не надо, но функционально
-//TODO Закодить
-//TODO

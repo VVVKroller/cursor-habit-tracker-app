@@ -13,14 +13,14 @@ import { VStack } from "@/components/ui/vstack";
 import { HStack } from "@/components/ui/hstack";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Habit, WeekDay } from "./types";
+import { Habit, WeekDay, Avatar } from "./types";
 import { colors } from "./utils/colors";
 import { RouteProp } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { createHabit } from "./utils/firebase";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const AVATARS = ["🏃‍♂️", "💪", "🧘‍♀️", "📚", "💧", "🥗", "😴", "🎯"];
+const AVATARS: Avatar[] = ["🏃‍♂️", "💪", "🧘‍♀️", "📚", "💧", "🥗", "😴", "🎯"];
 
 type RootStackParamList = {
   Home: undefined;
@@ -44,7 +44,7 @@ export default function AddHabit({
   const [description, setDescription] = useState("");
   const [goal, setGoal] = useState("");
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
-  const [selectedAvatar, setSelectedAvatar] = useState(AVATARS[0]);
+  const [selectedAvatar, setSelectedAvatar] = useState<Avatar>(AVATARS[0]);
   const [showAvatars, setShowAvatars] = useState(false);
 
   const toggleDay = (index: number) => {
@@ -64,6 +64,7 @@ export default function AddHabit({
 
     const habit: Habit = {
       id: crypto.randomUUID(),
+      avatar: selectedAvatar,
       name: name,
       daysCompleted: 0,
       description: description,

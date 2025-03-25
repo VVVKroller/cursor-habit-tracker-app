@@ -1,0 +1,22 @@
+export default [
+    "Start small - begin with 2-minute versions of your habit",
+    "Stack habits - link new habits to existing ones",
+    "Make it obvious - place visual cues in your environment",
+    "Track progress daily - use a habit tracker",
+    "Never miss twice - get back on track immediately",
+    "Start with identity - focus on who you want to become",
+    "Use temptation bundling - pair habits with rewards",
+    "Make it easy - reduce friction for good habits",
+    "Make it hard - increase friction for bad habits",
+    "Use implementation intentions - plan when and where",
+    "Start with one habit - don't try to change everything",
+    "Use habit stacking - chain multiple small habits",
+    "Make it satisfying - add immediate rewards",
+    "Use habit tracking - measure what matters",
+    "Start with environment - design your space for success",
+    "Use the 2-minute rule - make habits easy to start",
+    "Focus on systems - not just goals",
+    "Use habit contracts - make commitments public",
+    "Start with motivation - but don't rely on it",
+    "Use habit shaping - gradually increase difficulty"
+  ]

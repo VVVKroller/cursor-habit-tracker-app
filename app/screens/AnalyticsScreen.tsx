@@ -83,20 +83,7 @@ export default function AnalyticsScreen({
             />
           </View>
 
-          <View style={styles.statsContainer}>
-            <StatusCircles
-              steps={steps}
-              stepsGoal={10000}
-              waterIntake={waterIntake}
-              waterGoal={8}
-              onWaterPress={() => {}}
-            />
-          </View>
-
           <View style={styles.habitsContainer}>
-            <Text style={styles.sectionTitle}>
-              Habits for {selectedDate.toLocaleDateString()}
-            </Text>
             <View style={styles.progressCircle}>
               <Text style={styles.progressText}>
                 {Math.round(completionRate)}%

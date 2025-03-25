@@ -55,9 +55,12 @@ export function HabitItem({
       style={[styles.habitItem, isCompleted && styles.habitItemCompleted]}
     >
       <HStack style={styles.habitContent}>
-        <Pressable style={styles.checkbox} onPress={handleToggle}>
-          {isCompleted && <Text style={styles.checkmark}>✓</Text>}
-        </Pressable>
+      {!isCompleted ?
+        <View style={styles.checkbox}>
+        </View>
+      :(
+        <Text>{habit.avatar}</Text>
+      )}
         <VStack style={styles.habitInfo}>
           <Text style={styles.habitName}>{habit.name}</Text>
           <HStack style={styles.daysContainer}>

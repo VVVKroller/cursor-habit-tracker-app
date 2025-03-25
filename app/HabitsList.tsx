@@ -47,6 +47,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { BottomNavigation } from "./components/Navigation/BottomNavigation";
 import { StatusCircles } from "./components/StatusCircles/StatusCircles";
 import { MotiView } from "moti";
+import habitAdvice from "./utils/habitAdvice";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CALENDAR_ITEM_WIDTH = SCREEN_WIDTH / 7;
@@ -143,6 +144,33 @@ const WaterTrackerModal = ({
         </Animated.View>
       </Animated.View>
     </Modal>
+  );
+};
+
+// Add this component before the HabitsList component
+const HabitAdvice = ({ onClose }: { onClose: () => void }) => {
+  const [advice, setAdvice] = useState("");
+
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * habitAdvice.length);
+    setAdvice(habitAdvice[randomIndex]);
+  }, []);
+
+  return (
+    <View style={styles.adviceContainer }>
+      <LinearGradient
+        colors={[colors.surface.medium, colors.surface.light]}
+        style={styles.adviceGradient}
+      >
+        <Pressable style={styles.adviceCloseButton} onPress={onClose}>
+          <Ionicons name="close" size={20} color={colors.text.secondary} />
+        </Pressable>
+        <View style={styles.adviceContent}>
+          <Ionicons name="bulb-outline" size={24} color={colors.primary[500]} />
+          <Text style={styles.adviceText}>{advice}</Text>
+        </View>
+      </LinearGradient>
+    </View>
   );
 };
 
@@ -333,6 +361,8 @@ export default function HabitsList({
     showGoodHabits
   );
 
+  const [showAdvice, setShowAdvice] = useState(true);
+
   if (habitsForSelectedDay.length === 0) {
     return (
       <LinearGradient
@@ -459,6 +489,7 @@ export default function HabitsList({
             onToggle={setShowGoodHabits}
           />
 
+
           <Animated.ScrollView
             style={[styles.habitsContainer, listAnimatedStyle]}
             contentContainerStyle={styles.habitsContainerContent}
@@ -476,8 +507,14 @@ export default function HabitsList({
                 selectedDate={selectedDay.fullDate}
               />
             ))}
+            {habitsForSelectedDay.length > 0 && showAdvice && (
+            <HabitAdvice onClose={() => setShowAdvice(false)} />
+          )}
           </Animated.ScrollView>
+          
+
         </View>
+        
       </SafeAreaView>
 
       <BottomNavigation
@@ -898,5 +935,44 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     color: colors.text.secondary,
+  },
+  adviceContainer: {
+    marginBottom: 16,
+    borderRadius: 16,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+    
+  },
+  adviceGradient: {
+    padding: 16,
+  },
+  adviceCloseButton: {
+    position: "absolute",
+    right: 12,
+    top: 12,
+    zIndex: 1,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.surface.medium,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  adviceContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  adviceText: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.text.primary,
+    lineHeight: 20,
   },
 });
