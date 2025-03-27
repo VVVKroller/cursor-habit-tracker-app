@@ -7,6 +7,7 @@ import Animated, { withSpring } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { colors } from "../../utils/colors";
 import { WaterTrackerSettings } from "./WaterTrackerSettings";
+import { LinearGradient } from "expo-linear-gradient";
 
 interface WaterTrackerProps {
   waterIntake: number;
@@ -60,116 +61,122 @@ export function WaterTracker({
 
   return (
     <Box style={styles.waterTrackerContainer}>
-      <HStack style={styles.waterTrackerHeader}>
-        <View>
-          <Text style={styles.waterTrackerTitle}>Water Intake</Text>
-          <Text style={styles.waterTrackerSubtitle}>
-            Goal: {dailyGoal}L ({glassCapacity}ml glass)
-          </Text>
-        </View>
-        <Pressable
-          style={styles.settingsButton}
-          onPress={() => setShowSettings(true)}
-        >
-          <Ionicons
-            name="settings-outline"
-            size={24}
-            color={colors.text.secondary}
-          />
-        </Pressable>
-      </HStack>
-
-      <View style={styles.waterProgressContainer}>
-        <Animated.View
-          style={[
-            styles.waterProgress,
-            {
-              width: withSpring(`${progress * 100}%`, {
-                damping: 15,
-                stiffness: 100,
-              }),
-            },
-          ]}
-        />
-      </View>
-
-      <Text style={styles.waterAmount}>
-        {currentML}ml / {dailyGoal * 1000}ml
-      </Text>
-
-      <HStack style={styles.waterGlassesContainer}>
-        {[...Array(totalGlasses)].map((_, index) => (
+      <LinearGradient
+        colors={[colors.surface.light, colors.surface.medium]}
+        style={styles.waterTrackerGradient}
+      >
+        <HStack style={styles.waterTrackerHeader}>
+          <View>
+            <Text style={styles.waterTrackerSubtitle}>
+              Goal: {dailyGoal}L ({glassCapacity}ml glass)
+            </Text>
+          </View>
           <Pressable
-            key={index}
-            onPress={() => setWaterIntake(index + 1)}
-            style={({ pressed }) => [
-              styles.waterGlass,
-              pressed && styles.waterGlassPressed,
-              index < waterIntake && styles.waterGlassFilled,
-            ]}
+            style={styles.settingsButton}
+            onPress={() => setShowSettings(true)}
           >
             <Ionicons
-              name={index < waterIntake ? "water" : "water-outline"}
-              size={28}
-              color={index < waterIntake ? "#60A5FA" : colors.text.tertiary}
+              name="settings-outline"
+              size={24}
+              color={colors.text.secondary}
             />
           </Pressable>
-        ))}
-      </HStack>
+        </HStack>
 
-      <HStack style={styles.waterControls}>
-        <Pressable
-          style={[
-            styles.waterControlButton,
-            waterIntake <= 0 && styles.waterControlButtonDisabled,
-          ]}
-          onPress={handleDecrement}
-        >
-          <Ionicons
-            name="remove"
-            size={24}
-            color={
-              waterIntake <= 0 ? colors.text.tertiary : colors.text.primary
-            }
+        <View style={styles.waterProgressContainer}>
+          <Animated.View
+            style={[
+              styles.waterProgress,
+              {
+                width: withSpring(`${progress * 100}%`, {
+                  damping: 15,
+                  stiffness: 100,
+                }),
+              },
+            ]}
           />
-        </Pressable>
-        <Text style={styles.waterAmount}>{waterIntake} glasses</Text>
-        <Pressable
-          style={[
-            styles.waterControlButton,
-            waterIntake >= totalGlasses && styles.waterControlButtonDisabled,
-          ]}
-          onPress={handleIncrement}
-        >
-          <Ionicons
-            name="add"
-            size={24}
-            color={
-              waterIntake >= totalGlasses
-                ? colors.text.tertiary
-                : colors.text.primary
-            }
-          />
-        </Pressable>
-      </HStack>
+        </View>
 
-      <WaterTrackerSettings
-        visible={showSettings}
-        onClose={() => setShowSettings(false)}
-        onSave={handleSaveSettings}
-        currentDailyGoal={dailyGoal}
-        currentGlassCapacity={glassCapacity}
-      />
+        <Text style={styles.waterAmount}>
+          {currentML}ml / {dailyGoal * 1000}ml
+        </Text>
+
+        <HStack style={styles.waterGlassesContainer}>
+          {[...Array(totalGlasses)].map((_, index) => (
+            <Pressable
+              key={index}
+              onPress={() => setWaterIntake(index + 1)}
+              style={({ pressed }) => [
+                styles.waterGlass,
+                pressed && styles.waterGlassPressed,
+                index < waterIntake && styles.waterGlassFilled,
+              ]}
+            >
+              <Ionicons
+                name={index < waterIntake ? "water" : "water-outline"}
+                size={28}
+                color={
+                  index < waterIntake
+                    ? colors.primary[500]
+                    : colors.text.tertiary
+                }
+              />
+            </Pressable>
+          ))}
+        </HStack>
+
+        <HStack style={styles.waterControls}>
+          <Pressable
+            style={[
+              styles.waterControlButton,
+              waterIntake <= 0 && styles.waterControlButtonDisabled,
+            ]}
+            onPress={handleDecrement}
+          >
+            <Ionicons
+              name="remove"
+              size={24}
+              color={
+                waterIntake <= 0 ? colors.text.tertiary : colors.text.primary
+              }
+            />
+          </Pressable>
+          <Text style={styles.waterAmount}>{waterIntake} glasses</Text>
+          <Pressable
+            style={[
+              styles.waterControlButton,
+              waterIntake >= totalGlasses && styles.waterControlButtonDisabled,
+            ]}
+            onPress={handleIncrement}
+          >
+            <Ionicons
+              name="add"
+              size={24}
+              color={
+                waterIntake >= totalGlasses
+                  ? colors.text.tertiary
+                  : colors.text.primary
+              }
+            />
+          </Pressable>
+        </HStack>
+
+        <WaterTrackerSettings
+          visible={showSettings}
+          onClose={() => setShowSettings(false)}
+          onSave={handleSaveSettings}
+          currentDailyGoal={dailyGoal}
+          currentGlassCapacity={glassCapacity}
+        />
+      </LinearGradient>
     </Box>
   );
 }
 
 const styles = StyleSheet.create({
   waterTrackerContainer: {
-    backgroundColor: colors.surface.medium,
-    padding: 24,
     borderRadius: 24,
-    marginVertical: 20,
+    overflow: "hidden",
     borderWidth: 1,
     borderColor: colors.border.light,
     shadowColor: "#000",
@@ -178,10 +185,14 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     elevation: 8,
   },
+  waterTrackerGradient: {
+    padding: 24,
+  },
   waterTrackerHeader: {
     justifyContent: "space-between",
-    alignItems: "flex-start",
+    alignItems: "flex-end",
     marginBottom: 20,
+    
   },
   waterTrackerTitle: {
     fontSize: 24,
@@ -197,13 +208,15 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.surface.light,
+    backgroundColor: colors.surface.medium,
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: colors.border.light,
   },
   waterProgressContainer: {
     height: 8,
-    backgroundColor: colors.surface.light,
+    backgroundColor: colors.surface.medium,
     borderRadius: 4,
     marginBottom: 8,
     overflow: "hidden",
@@ -228,18 +241,18 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.surface.light,
+    backgroundColor: colors.surface.medium,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.border.light,
   },
   waterGlassPressed: {
     transform: [{ scale: 0.95 }],
   },
   waterGlassFilled: {
-    backgroundColor: colors.primary[500] + "20",
-    borderColor: colors.primary[500] + "40",
+    backgroundColor: `${colors.primary[500]}20`,
+    borderColor: colors.primary[500],
   },
   waterControls: {
     justifyContent: "center",

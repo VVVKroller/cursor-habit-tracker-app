@@ -7,6 +7,7 @@ import {
   Switch,
   Pressable,
   Image,
+  Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -15,7 +16,27 @@ import { colors } from "./utils/colors";
 import { BottomNavigation } from "./components/Navigation/BottomNavigation";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { user, signInWithGoogle } from "./utils/firebase";
+import { user, signInWithGoogle, signOut } from "./utils/firebase";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import Animated, {
+  FadeIn,
+  FadeOut,
+  SlideInDown,
+  SlideOutUp,
+  withTiming,
+  Easing,
+} from "react-native-reanimated";
+
+type RootStackParamList = {
+  Auth: undefined;
+  Home: undefined;
+  Settings: undefined;
+  AddHabit: undefined;
+  Friends: undefined;
+  Analytics: undefined;
+};
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 type SettingsSectionProps = {
   title: string;
@@ -76,15 +97,93 @@ const SettingsItem = ({
   </Pressable>
 );
 
+const LogoutConfirmationModal = ({
+  visible,
+  onClose,
+  onConfirm,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}) => {
+  if (!visible) return null;
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      statusBarTranslucent
+      animationType="none"
+      onRequestClose={onClose}
+    >
+      <Animated.View
+        entering={FadeIn.duration(200)}
+        exiting={FadeOut.duration(200)}
+        style={styles.deleteModalOverlay}
+      >
+        <Animated.View
+          entering={SlideInDown.duration(300)}
+          exiting={SlideOutUp.duration(200)}
+          style={styles.deleteModalContent}
+        >
+          <LinearGradient
+            colors={[colors.surface.light, colors.surface.medium]}
+            style={styles.deleteModalGradient}
+          >
+            <View style={styles.deleteModalHeader}>
+              <View style={styles.deleteIconContainer}>
+                <Ionicons name="log-out-outline" size={32} color={colors.status.error} />
+              </View>
+              <Text style={styles.deleteModalTitle}>Sign Out</Text>
+              <Pressable style={styles.deleteModalCloseButton} onPress={onClose}>
+                <Ionicons name="close" size={24} color={colors.text.secondary} />
+              </Pressable>
+            </View>
+
+            <Text style={styles.deleteModalDescription}>
+              Are you sure you want to sign out? You'll need to sign in again to access your account.
+            </Text>
+
+            <View style={styles.deleteModalButtons}>
+              <Pressable style={styles.deleteModalCancelButton} onPress={onClose}>
+                <Text style={styles.deleteModalCancelButtonText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                style={styles.deleteModalConfirmButton}
+                onPress={onConfirm}
+              >
+                <Text style={styles.deleteModalConfirmButtonText}>Sign Out</Text>
+              </Pressable>
+            </View>
+          </LinearGradient>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+};
+
 export default function SettingsScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
   const [notifications, setNotifications] = React.useState(true);
   const [darkMode, setDarkMode] = React.useState(false);
   const [healthSync, setHealthSync] = React.useState(true);
+  const [showLogoutModal, setShowLogoutModal] = React.useState(false);
 
   const handleLogout = async () => {
     try {
-      await AsyncStorage.removeItem("user");
+      // Sign out from Firebase
+      await signOut();
+
+      // Clear all app data from AsyncStorage
+      await AsyncStorage.multiRemove([
+        "user",
+        "habits",
+        "waterIntake",
+        "settings",
+        "lastSyncDate",
+      ]);
+
+      // Reset navigation to Auth screen
       navigation.reset({
         index: 0,
         routes: [{ name: "Auth" }],
@@ -140,7 +239,10 @@ export default function SettingsScreen() {
                   </Text>
                   <Text style={styles.userEmail}>{user.email}</Text>
                 </View>
-                <Pressable style={styles.logoutButton} onPress={handleLogout}>
+                <Pressable 
+                  style={styles.logoutButton} 
+                  onPress={() => setShowLogoutModal(true)}
+                >
                   <Ionicons
                     name="log-out-outline"
                     size={24}
@@ -168,13 +270,7 @@ export default function SettingsScreen() {
               onValueChange={setNotifications}
               color={colors.primary[500]}
             />
-            <SettingsItem
-              icon="moon"
-              label="Dark Mode"
-              value={darkMode}
-              onValueChange={setDarkMode}
-              color={colors.primary[600]}
-            />
+
             <SettingsItem
               icon="heart"
               label="Health App Sync"
@@ -250,6 +346,14 @@ export default function SettingsScreen() {
         </ScrollView>
       </SafeAreaView>
       <BottomNavigation />
+      <LogoutConfirmationModal
+        visible={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={() => {
+          setShowLogoutModal(false);
+          handleLogout();
+        }}
+      />
     </LinearGradient>
   );
 }
@@ -389,5 +493,102 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#E8EAED",
     fontFamily: "System",
+  },
+  deleteModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.75)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  deleteModalContent: {
+    width: "100%",
+    maxWidth: 400,
+    borderRadius: 24,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  deleteModalGradient: {
+    padding: 24,
+  },
+  deleteModalHeader: {
+    alignItems: "center",
+    marginBottom: 20,
+    position: "relative",
+    paddingTop: 16,
+  },
+  deleteIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: `${colors.status.error}20`,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  deleteModalTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: colors.text.primary,
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  deleteModalCloseButton: {
+    position: "absolute",
+    right: 0,
+    top: 0,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surface.medium,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: colors.border.light,
+  },
+  deleteModalDescription: {
+    fontSize: 16,
+    color: colors.text.secondary,
+    textAlign: "center",
+    marginBottom: 24,
+    lineHeight: 24,
+  },
+  deleteModalButtons: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  deleteModalCancelButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: colors.surface.medium,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: colors.border.light,
+  },
+  deleteModalCancelButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: colors.text.secondary,
+  },
+  deleteModalConfirmButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: colors.status.error,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  deleteModalConfirmButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: colors.text.primary,
   },
 });

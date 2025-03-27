@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   circle: {
-    width: 60,
+    width: 60, 
     height: 60,
     justifyContent: "center",
     alignItems: "center",

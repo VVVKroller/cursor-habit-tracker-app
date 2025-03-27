@@ -157,13 +157,13 @@ const HabitAdvice = ({ onClose }: { onClose: () => void }) => {
   }, []);
 
   return (
-    <View style={styles.adviceContainer }>
+    <View style={styles.adviceContainer}>
       <LinearGradient
         colors={[colors.surface.medium, colors.surface.light]}
         style={styles.adviceGradient}
       >
         <Pressable style={styles.adviceCloseButton} onPress={onClose}>
-          <Ionicons name="close" size={20} color={colors.text.secondary} />
+          <Ionicons name="close" size={20} color={colors.primary[500]} />
         </Pressable>
         <View style={styles.adviceContent}>
           <Ionicons name="bulb-outline" size={24} color={colors.primary[500]} />
@@ -171,6 +171,92 @@ const HabitAdvice = ({ onClose }: { onClose: () => void }) => {
         </View>
       </LinearGradient>
     </View>
+  );
+};
+const allDates = generateDatesRange();
+
+// Add this component after the WaterTrackerModal component
+const DeleteConfirmationModal = ({
+  visible,
+  onClose,
+  onConfirm,
+  habitName,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  habitName: string;
+}) => {
+  if (!visible) return null;
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      statusBarTranslucent
+      animationType="none"
+      onRequestClose={onClose}
+    >
+      <Animated.View
+        entering={FadeIn.duration(200)}
+        exiting={FadeOut.duration(200)}
+        style={styles.deleteModalOverlay}
+      >
+        <Animated.View
+          entering={SlideInDown.duration(300).easing(
+            Easing.bezier(0.2, 0, 0, 1)
+          )}
+          exiting={SlideOutUp.duration(200).easing(Easing.bezier(0.4, 0, 1, 1))}
+          style={styles.deleteModalContent}
+        >
+          <LinearGradient
+            colors={[colors.surface.light, colors.surface.medium]}
+            style={styles.deleteModalGradient}
+          >
+            <View style={styles.deleteModalHeader}>
+              <View style={styles.deleteIconContainer}>
+                <Ionicons
+                  name="warning"
+                  size={32}
+                  color={colors.status.error}
+                />
+              </View>
+              <Text style={styles.deleteModalTitle}>Delete Habit</Text>
+              <Pressable
+                style={styles.deleteModalCloseButton}
+                onPress={onClose}
+              >
+                <Ionicons
+                  name="close"
+                  size={24}
+                  color={colors.text.secondary}
+                />
+              </Pressable>
+            </View>
+
+            <Text style={styles.deleteModalDescription}>
+              Are you sure you want to delete "{habitName}"? This action cannot
+              be undone.
+            </Text>
+
+            <View style={styles.deleteModalButtons}>
+              <Pressable
+                style={styles.deleteModalCancelButton}
+                onPress={onClose}
+              >
+                <Text style={styles.deleteModalCancelButtonText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                style={styles.deleteModalConfirmButton}
+                onPress={onConfirm}
+              >
+                <Text style={styles.deleteModalConfirmButtonText}>Delete</Text>
+              </Pressable>
+            </View>
+          </LinearGradient>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
   );
 };
 
@@ -183,7 +269,6 @@ export default function HabitsList({
 }) {
   // Add navigation hook
   const navigation = useNavigation<NavigationProp>();
-  const allDates = generateDatesRange();
   const now = new Date();
   const initialIndex = allDates.findIndex((item) => {
     return (
@@ -218,15 +303,6 @@ export default function HabitsList({
     opacity: listOpacity.value,
   }));
 
-  // Filter habits based on type
-  const filteredHabits = React.useMemo(
-    () =>
-      habits.filter(
-        (habit) => habit.type === (showGoodHabits ? "good" : "bad")
-      ),
-    [habits, showGoodHabits]
-  );
-
   // Add a ref for tracking if initial scroll has happened
   const hasScrolledToToday = useRef(false);
 
@@ -238,12 +314,12 @@ export default function HabitsList({
     // Scroll to today's date if we haven't already
     if (
       scrollRef.current &&
-      initialIndex !== -1 &&
+      selectedDayIndex !== -1 &&
       !hasScrolledToToday.current
     ) {
       const screenWidth = Dimensions.get("window").width;
       const xOffset =
-        initialIndex * CALENDAR_ITEM_WIDTH -
+        selectedDayIndex * CALENDAR_ITEM_WIDTH -
         screenWidth / 2 +
         CALENDAR_ITEM_WIDTH / 2;
 
@@ -256,7 +332,7 @@ export default function HabitsList({
         hasScrolledToToday.current = true;
       });
     }
-  }, [initialIndex]); // Add initialIndex as dependency
+  }, [selectedDayIndex]); // Add initialIndex as dependency
 
   function handleSelectDay(idx: number) {
     setSelectedDayIndex(idx);
@@ -362,6 +438,21 @@ export default function HabitsList({
   );
 
   const [showAdvice, setShowAdvice] = useState(true);
+
+  const [habitToDelete, setHabitToDelete] = useState<Habit | null>(null);
+
+  // Add this function to handle habit deletion
+  const handleDeleteHabit = (habit: Habit) => {
+    setHabitToDelete(habit);
+  };
+
+  const confirmDelete = () => {
+    if (!habitToDelete) return;
+
+    setHabits(habits.filter((h) => h.id !== habitToDelete.id));
+    setHabitToDelete(null);
+    // Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  };
 
   if (habitsForSelectedDay.length === 0) {
     return (
@@ -489,7 +580,6 @@ export default function HabitsList({
             onToggle={setShowGoodHabits}
           />
 
-
           <Animated.ScrollView
             style={[styles.habitsContainer, listAnimatedStyle]}
             contentContainerStyle={styles.habitsContainerContent}
@@ -502,19 +592,17 @@ export default function HabitsList({
                 habit={habit}
                 onPress={() => toggleHabitCompletion(habit.id)}
                 onEdit={() => handleEditHabit(habit)}
+                onDelete={() => handleDeleteHabit(habit)}
                 onToggleCompletion={() => toggleHabitCompletion(habit.id)}
                 selectedDay={getWeekDay(selectedDay.fullDate)}
                 selectedDate={selectedDay.fullDate}
               />
             ))}
             {habitsForSelectedDay.length > 0 && showAdvice && (
-            <HabitAdvice onClose={() => setShowAdvice(false)} />
-          )}
+              <HabitAdvice onClose={() => setShowAdvice(false)} />
+            )}
           </Animated.ScrollView>
-          
-
         </View>
-        
       </SafeAreaView>
 
       <BottomNavigation
@@ -545,6 +633,14 @@ export default function HabitsList({
         waterIntake={waterIntake}
         setWaterIntake={setWaterIntake}
         circlePosition={circlePosition}
+      />
+
+      {/* Add Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        visible={!!habitToDelete}
+        onClose={() => setHabitToDelete(null)}
+        onConfirm={confirmDelete}
+        habitName={habitToDelete?.name || ""}
       />
     </LinearGradient>
   );
@@ -680,12 +776,8 @@ const styles = StyleSheet.create({
   modalContent: {
     width: "90%",
     maxWidth: 400,
-    backgroundColor: "rgba(30, 27, 75, 0.95)",
     borderRadius: 20,
-    padding: 20,
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.4,
@@ -739,6 +831,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 4,
+    display: "flex",
+    width: "100%",
+    
   },
   modalCloseButton: {
     width: 44,
@@ -870,10 +965,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.75)",
     justifyContent: "center",
+    alignItems: "center",
   },
   gradient: {
     padding: 24,
     paddingTop: 16,
+    borderRadius: 20,
   },
   handle: {
     width: 32,
@@ -947,7 +1044,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
-    
   },
   adviceGradient: {
     padding: 16,
@@ -974,5 +1070,102 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.text.primary,
     lineHeight: 20,
+  },
+  deleteModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.75)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  deleteModalContent: {
+    width: "100%",
+    maxWidth: 400,
+    borderRadius: 24,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: colors.border.light,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  deleteModalGradient: {
+    padding: 24,
+  },
+  deleteModalHeader: {
+    alignItems: "center",
+    marginBottom: 20,
+    position: "relative",
+    paddingTop: 16,
+  },
+  deleteIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: `${colors.status.error}20`,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  deleteModalTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: colors.text.primary,
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  deleteModalCloseButton: {
+    position: "absolute",
+    right: 0,
+    top: 0,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surface.medium,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: colors.border.light,
+  },
+  deleteModalDescription: {
+    fontSize: 16,
+    color: colors.text.secondary,
+    textAlign: "center",
+    marginBottom: 24,
+    lineHeight: 24,
+  },
+  deleteModalButtons: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  deleteModalCancelButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: colors.surface.medium,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: colors.border.light,
+  },
+  deleteModalCancelButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: colors.text.secondary,
+  },
+  deleteModalConfirmButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: colors.status.error,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  deleteModalConfirmButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: colors.text.primary,
   },
 });

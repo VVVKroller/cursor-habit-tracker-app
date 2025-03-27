@@ -119,9 +119,22 @@ export default function AnalyticsScreen({
             ))}
 
             {habitsForSelectedDay.length === 0 && (
-              <Text style={styles.emptyText}>
-                No habits scheduled for this day
-              </Text>
+              <View style={styles.emptyStateContainer}>
+                <View style={styles.emptyStateIconContainer}>
+                  <Ionicons
+                    name="analytics-outline"
+                    size={48}
+                    color={colors.text.secondary}
+                  />
+                </View>
+                <Text style={styles.emptyStateTitle}>
+                  No Habits for This Day
+                </Text>
+                <Text style={styles.emptyStateDescription}>
+                  This is where you'll see your habit analytics. Add habits to
+                  track your progress and view detailed statistics.
+                </Text>
+              </View>
             )}
           </View>
         </ScrollView>
@@ -215,10 +228,36 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     marginTop: 4,
   },
-  emptyText: {
-    textAlign: "center",
-    color: colors.text.secondary,
-    fontSize: 16,
+  emptyStateContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+    backgroundColor: colors.surface.medium,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border.light,
     marginTop: 20,
+  },
+  emptyStateIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: `${colors.primary[500]}20`,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: colors.text.primary,
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  emptyStateDescription: {
+    fontSize: 14,
+    color: colors.text.secondary,
+    textAlign: "center",
+    lineHeight: 20,
   },
 });
